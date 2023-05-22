@@ -1,0 +1,19 @@
+app:
+  version: 1.0
+  name: presentation-service
+  host: 0.0.0.0                                 # Server IP
+  port: 8083                                    # Server port
+  ctxTimeout: 3m
+grpc:
+  host: 0.0.0.0
+  port: 8082
+dependencies:
+  cache:
+    address: localhost:6379
+    password:
+    database: 0
+  messageBroker:
+    brokers: localhost:9092
+    consumer:
+      topic: BBCA
+      group: ohlc-analyzer
