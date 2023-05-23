@@ -1,0 +1,67 @@
+package cmd
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"net/http"
+
+	"github.com/gerins/log"
+	middlewareLog "github.com/gerins/log/middleware/echo"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
+
+	"core-engine/config"
+)
+
+type HttpServer struct {
+	Server *echo.Echo
+	cfg    *config.Config
+}
+
+// NewHttpServer returns new HttpServer.
+func NewHttpServer(cfg *config.Config) *HttpServer {
+	return &HttpServer{
+		cfg:    cfg,
+		Server: echo.New(),
+	}
+}
+
+func (s *HttpServer) Run() chan bool {
+	// Apply middleware
+	s.Server.Use(middleware.Recover())
+	// Init logging middleware
+	s.Server.Use(middlewareLog.SetLogRequest())                       // Mandatory
+	s.Server.Use(middleware.BodyDump(middlewareLog.SaveLogRequest())) // Mandatory
+
+	// Init app
+	s.Server.GET("/ping", func(c echo.Context) error {
+		return c.String(http.StatusOK, "OK")
+	})
+
+	// Start server
+	go func() {
+		s.Server.HideBanner = true
+		address := fmt.Sprintf("%v:%v", s.cfg.App.Host, s.cfg.App.Port)
+		if err := s.Server.Start(address); err != nil {
+			// ErrServerClosed is expected behavior when exiting app
+			if !errors.Is(err, http.ErrServerClosed) {
+				log.Fatalf("%v server, %v", s.cfg.App.Name, err)
+			}
+			log.Infof("%v server, %v", s.cfg.App.Name, err)
+		}
+	}()
+
+	serverExitSignal := make(chan bool)
+	go func() {
+		<-serverExitSignal
+		log.Info("stopping http server")
+		if err := s.Server.Shutdown(context.Background()); err != nil {
+			log.Fatalf("failed stopping server, %v", err)
+		}
+		log.Info("finished stopping http server")
+		serverExitSignal <- true // Send signal already finish the job
+	}()
+
+	return serverExitSignal
+}

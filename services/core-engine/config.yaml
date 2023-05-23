@@ -1,6 +1,6 @@
 app:
   version: 1.0
-  name: matching-engine
+  name: core-engine
   host: 0.0.0.0                                 # Server IP
   port: 8083                                    # Server port
   ctxTimeout: 3m
@@ -14,6 +14,3 @@ dependencies:
     database: 0
   messageBroker:
     brokers: localhost:9092
-    consumer:
-      topic: ETH
-      group: matching-engine

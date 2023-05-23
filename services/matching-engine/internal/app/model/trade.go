@@ -3,15 +3,15 @@ package model
 import "encoding/json"
 
 const (
-	BuyOrderCode  = 1
-	SellOrderCode = 2
+	BuyOrderCode  = "BUY"
+	SellOrderCode = "SELL"
 )
 
 type Order struct {
+	ID     string `json:"id"`
 	Amount uint64 `json:"amount"`
 	Price  uint64 `json:"price"`
-	ID     string `json:"id"`
-	Side   int8   `json:"side"`
+	Type   string `json:"type"`
 }
 
 func (order *Order) FromJSON(msg []byte) error {

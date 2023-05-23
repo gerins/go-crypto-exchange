@@ -32,7 +32,7 @@ func NewOrderBook(validator *validator.Validate, kafkaProducer kafka.Producer, c
 
 // Process an order and return the trades generated before adding the remaining amount to the market
 func (book *OrderBook) Execute(ctx context.Context, order model.Order) []model.Trade {
-	if order.Side == model.BuyOrderCode {
+	if order.Type == model.BuyOrderCode {
 		return book.processLimitBuy(order)
 	}
 
