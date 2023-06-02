@@ -14,20 +14,20 @@ import (
 	"core-engine/config"
 )
 
-type HttpServer struct {
+type HTTPServer struct {
 	Server *echo.Echo
 	cfg    *config.Config
 }
 
-// NewHttpServer returns new HttpServer.
-func NewHttpServer(cfg *config.Config) *HttpServer {
-	return &HttpServer{
+// NewHTTPServer returns new HttpServer.
+func NewHTTPServer(cfg *config.Config) *HTTPServer {
+	return &HTTPServer{
 		cfg:    cfg,
 		Server: echo.New(),
 	}
 }
 
-func (s *HttpServer) Run() chan bool {
+func (s *HTTPServer) Run() chan bool {
 	// Apply middleware
 	s.Server.Use(middleware.Recover())
 	// Init logging middleware

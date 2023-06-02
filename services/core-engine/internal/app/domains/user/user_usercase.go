@@ -12,7 +12,7 @@ type usecase struct {
 }
 
 // NewUsecase returns new user usecase.
-func NewUsecase(validator *validator.Validate, userRepository Repository) *usecase {
+func NewUsecase(validator *validator.Validate, userRepository Repository) Usecase {
 	return &usecase{
 		validator:      validator,
 		userRepository: userRepository,

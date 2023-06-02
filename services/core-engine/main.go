@@ -20,7 +20,7 @@ func init() {
 func main() {
 	var (
 		cfg  = config.ParseConfigFile("config.yaml")
-		http = cmd.NewHttpServer(cfg)
+		http = cmd.NewHTTPServer(cfg)
 		grpc = cmd.NewGRPCServer(cfg)
 	)
 

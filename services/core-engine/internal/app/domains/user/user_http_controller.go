@@ -36,15 +36,15 @@ func (h *httpHandler) LoginHandler(c echo.Context) error {
 
 	var requestPayload LoginRequest
 	if err := c.Bind(&requestPayload); err != nil {
-		return response.ResponseFailed(c, err, http.StatusBadRequest)
+		return response.Failed(c, err, http.StatusBadRequest)
 	}
 
 	loginResult, err := h.userUsecase.Login(ctx, requestPayload)
 	if err != nil {
-		return response.ResponseFailed(c, err, http.StatusBadRequest)
+		return response.Failed(c, err, http.StatusBadRequest)
 	}
 
-	return response.ResponseSuccess(c, loginResult)
+	return response.Success(c, loginResult)
 }
 
 func (h *httpHandler) RegisterHandler(c echo.Context) error {
@@ -53,13 +53,13 @@ func (h *httpHandler) RegisterHandler(c echo.Context) error {
 
 	var requestPayload RegisterRequest
 	if err := c.Bind(&requestPayload); err != nil {
-		return response.ResponseFailed(c, err, http.StatusBadRequest)
+		return response.Failed(c, err, http.StatusBadRequest)
 	}
 
 	registerResult, err := h.userUsecase.Register(ctx, requestPayload)
 	if err != nil {
-		return response.ResponseFailed(c, err, http.StatusBadRequest)
+		return response.Failed(c, err, http.StatusBadRequest)
 	}
 
-	return response.ResponseSuccess(c, registerResult)
+	return response.Success(c, registerResult)
 }

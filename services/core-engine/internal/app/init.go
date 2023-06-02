@@ -1,8 +1,6 @@
 package app
 
 import (
-	"time"
-
 	"github.com/gerins/log"
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
@@ -19,7 +17,7 @@ func Init(e *echo.Echo, g *grpc.Server, cfg *config.Config) chan bool {
 	var (
 		exitSignal     = make(chan bool)
 		validator      = validator.New()
-		defaultTimeout = 30 * time.Second
+		defaultTimeout = cfg.App.CtxTimeout
 		readDatabase   = gorm.Init(cfg.Dependencies.Database.Read)
 		writeDatabase  = gorm.Init(cfg.Dependencies.Database.Write)
 		_              = redis.Init(cfg.Dependencies.Cache)

@@ -13,7 +13,7 @@ type DefaultResponse struct {
 	Data   interface{} `json:"payload"`
 }
 
-func ResponseSuccess(c echo.Context, data interface{}) error {
+func Success(c echo.Context, data interface{}) error {
 	response := DefaultResponse{
 		Code:   http.StatusOK,
 		Status: http.StatusText(http.StatusOK),
@@ -23,7 +23,7 @@ func ResponseSuccess(c echo.Context, data interface{}) error {
 	return c.JSON(http.StatusOK, response)
 }
 
-func ResponseFailed(c echo.Context, err interface{}, code int) error {
+func Failed(c echo.Context, err interface{}, code int) error {
 	response := DefaultResponse{
 		Code:   code,
 		Status: cast.ToString(err),
