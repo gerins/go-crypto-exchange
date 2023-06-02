@@ -33,6 +33,10 @@ type GRPC struct {
 type Dependencies struct {
 	Cache         Cache
 	MessageBroker MessageBroker
+	Database      struct {
+		Read  Database
+		Write Database
+	}
 }
 
 type Cache struct {
@@ -43,6 +47,21 @@ type Cache struct {
 
 type MessageBroker struct {
 	Brokers string
+}
+
+type Database struct {
+	Host     string
+	Port     int
+	User     string
+	Pass     string
+	Name     string
+	DebugLog bool
+	Pool     struct {
+		MaxIdleConn     int
+		MaxOpenConn     int
+		MaxConnLifetime time.Duration
+		MaxIdleLifeTime time.Duration
+	}
 }
 
 // ParseConfigFile is used for parsing config file into struct

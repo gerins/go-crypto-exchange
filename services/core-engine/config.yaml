@@ -14,3 +14,28 @@ dependencies:
     database: 0
   messageBroker:
     brokers: localhost:9092
+  database:
+    read:
+      host: localhost
+      port: 5434
+      user: user
+      pass: root
+      name: crypto-exchange
+      debugLog: true # Please disable in Production Server
+      pool:
+        maxIdleConn: 5
+        maxOpenConn: 100 
+        maxConnLifeTime: 30s
+        maxIdleLifeTime: 3s
+    write:
+      host: localhost
+      port: 5434
+      user: user
+      pass: root
+      name: crypto-exchange
+      debugLog: true # Please disable in Production Server
+      pool:
+        maxIdleConn: 5
+        maxOpenConn: 100 
+        maxConnLifeTime: 30s
+        maxIdleLifeTime: 3s

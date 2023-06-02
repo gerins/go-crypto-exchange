@@ -1,29 +1,35 @@
 package app
 
 import (
+	"time"
+
 	"github.com/gerins/log"
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
 	"google.golang.org/grpc"
 
 	"core-engine/config"
-	"core-engine/internal/app/controller"
-	"core-engine/internal/app/usecase"
+	"core-engine/internal/app/domains/user"
+	"core-engine/pkg/gorm"
 	"core-engine/pkg/kafka"
 	"core-engine/pkg/redis"
 )
 
 func Init(e *echo.Echo, g *grpc.Server, cfg *config.Config) chan bool {
 	var (
-		exitSignal            = make(chan bool)
-		validator             = validator.New()
-		cache                 = redis.Init(cfg.Dependencies.Cache)
-		kafkaProducer, writer = kafka.NewProducer(cfg.Dependencies.MessageBroker.Brokers)
+		exitSignal     = make(chan bool)
+		validator      = validator.New()
+		defaultTimeout = 30 * time.Second
+		readDatabase   = gorm.Init(cfg.Dependencies.Database.Read)
+		writeDatabase  = gorm.Init(cfg.Dependencies.Database.Write)
+		_              = redis.Init(cfg.Dependencies.Cache)
+		_, writer      = kafka.NewProducer(cfg.Dependencies.MessageBroker.Brokers)
 	)
 
 	// Init http router
-	orderBookUsecase := usecase.NewOrderBook(validator, kafkaProducer, cache)
-	controller.NewHTTPHandler(orderBookUsecase, cfg.App.CtxTimeout).InitRoutes(e)
+	userRepository := user.NewRepository(readDatabase, writeDatabase)
+	userUsecase := user.NewUsecase(validator, userRepository)
+	user.NewHTTPHandler(userUsecase, defaultTimeout).InitRoutes(e)
 
 	// Gracefull shutdown
 	go func() {

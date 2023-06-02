@@ -15,7 +15,7 @@ CREATE TABLE users (
     full_name                       VARCHAR(128) NOT NULL DEFAULT '',
     email                           VARCHAR(128) NOT NULL,
     phone_number                    VARCHAR(128) NOT NULL DEFAULT '',
-    balance                         INTEGER NOT NULL DEFAULT 0,
+    balance                         BIGINT NOT NULL DEFAULT 0,
     password                        VARCHAR(512) NOT NULL,
     status                          BOOLEAN NOT NULL DEFAULT true,
     created_at                      TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
