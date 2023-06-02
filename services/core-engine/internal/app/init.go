@@ -29,7 +29,7 @@ func Init(e *echo.Echo, g *grpc.Server, cfg *config.Config) chan bool {
 	userUsecase := user.NewUsecase(validator, userRepository)
 	user.NewHTTPHandler(userUsecase, defaultTimeout).InitRoutes(e)
 
-	// Gracefull shutdown
+	// Graceful shutdown
 	go func() {
 		<-exitSignal // Receive exit signal
 		log.Info("disconnecting service dependencies")
