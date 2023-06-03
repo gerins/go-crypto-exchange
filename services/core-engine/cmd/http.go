@@ -29,8 +29,7 @@ func NewHTTPServer(cfg *config.Config) *HTTPServer {
 
 func (s *HTTPServer) Run() chan bool {
 	// Apply middleware
-	s.Server.Use(middleware.Recover())
-	// Init logging middleware
+	s.Server.Use(middlewareLog.Recover())
 	s.Server.Use(middlewareLog.SetLogRequest())                       // Mandatory
 	s.Server.Use(middleware.BodyDump(middlewareLog.SaveLogRequest())) // Mandatory
 

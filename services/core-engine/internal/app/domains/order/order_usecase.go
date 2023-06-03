@@ -5,20 +5,30 @@ import (
 	"time"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/spf13/cast"
 
 	"core-engine/internal/app/domains/order/model"
 	"core-engine/internal/app/domains/user"
+	"core-engine/pkg/jwt"
+	"core-engine/pkg/kafka"
 )
 
 type usecase struct {
+	kafkaProducer   kafka.Producer
 	validator       *validator.Validate
 	orderRepository model.Repository
 	userRepository  user.Repository
 }
 
 // NewUsecase returns new order usecase.
-func NewUsecase(validator *validator.Validate, orderRepository model.Repository, userRepository user.Repository) model.Usecase {
+func NewUsecase(
+	kafkaProducer kafka.Producer,
+	validator *validator.Validate,
+	orderRepository model.Repository,
+	userRepository user.Repository,
+) model.Usecase {
 	return &usecase{
+		kafkaProducer:   kafkaProducer,
 		validator:       validator,
 		orderRepository: orderRepository,
 		userRepository:  userRepository,
@@ -26,8 +36,10 @@ func NewUsecase(validator *validator.Validate, orderRepository model.Repository,
 }
 
 func (u *usecase) ProcessOrder(ctx context.Context, orderReq model.RequestOrder) (model.Order, error) {
+	tokenPayload := jwt.GetPayloadFromContext(ctx)
+
 	// Check user detail
-	userDetail, err := u.userRepository.FindUserByEmail(ctx, "Price.Price85@hotmail.com")
+	userDetail, err := u.userRepository.FindUserByEmail(ctx, tokenPayload.Email)
 	if err != nil {
 		return model.Order{}, err
 	}
@@ -77,6 +89,9 @@ func (u *usecase) ProcessOrder(ctx context.Context, orderReq model.RequestOrder)
 	}
 
 	// Publish to matching engine
+	if err := u.kafkaProducer.Send(ctx, cryptoPairDetail.Code, cast.ToString(order.ID), order); err != nil {
+		return model.Order{}, err
+	}
 
 	return order, nil
 }

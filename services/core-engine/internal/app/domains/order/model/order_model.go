@@ -44,9 +44,9 @@ type Order struct {
 	Side            Side       `json:"side" gorm:"column:side;type:text"`
 	Status          Status     `json:"status" gorm:"column:status;type:text"`
 	TransactionTime int64      `json:"transaction_time" gorm:"column:transaction_time;type:bigint"` // Transaction time
-	CreatedAt       time.Time  `json:"created_at" gorm:"column:created_at;type:datetime"`
-	UpdatedAt       time.Time  `json:"updated_at" gorm:"column:updated_at;type:datetime"`
-	DeletedAt       *time.Time `json:"deleted_at" gorm:"column:deleted_at;type:datetime"`
+	CreatedAt       time.Time  `json:"-" gorm:"column:created_at;type:datetime"`
+	UpdatedAt       time.Time  `json:"-" gorm:"column:updated_at;type:datetime"`
+	DeletedAt       *time.Time `json:"-" gorm:"column:deleted_at;type:datetime"`
 }
 
 func (Order) TableName() string {

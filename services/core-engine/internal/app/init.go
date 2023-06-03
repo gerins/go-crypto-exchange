@@ -16,13 +16,13 @@ import (
 
 func Init(e *echo.Echo, g *grpc.Server, cfg *config.Config) chan bool {
 	var (
-		exitSignal     = make(chan bool)
-		validator      = validator.New()
-		defaultTimeout = cfg.App.CtxTimeout
-		readDatabase   = gorm.Init(cfg.Dependencies.Database.Read)
-		writeDatabase  = gorm.Init(cfg.Dependencies.Database.Write)
-		_              = redis.Init(cfg.Dependencies.Cache)
-		_, writer      = kafka.NewProducer(cfg.Dependencies.MessageBroker.Brokers)
+		exitSignal       = make(chan bool)
+		validator        = validator.New()
+		defaultTimeout   = cfg.App.CtxTimeout
+		readDatabase     = gorm.Init(cfg.Dependencies.Database.Read)
+		writeDatabase    = gorm.Init(cfg.Dependencies.Database.Write)
+		_                = redis.Init(cfg.Dependencies.Cache)
+		producer, writer = kafka.NewProducer(cfg.Dependencies.MessageBroker.Brokers)
 	)
 
 	// Init http router
@@ -34,8 +34,8 @@ func Init(e *echo.Echo, g *grpc.Server, cfg *config.Config) chan bool {
 
 		// Order Domain
 		orderRepository := order.NewRepository(readDatabase, writeDatabase)
-		orderUsecase := order.NewUsecase(validator, orderRepository, userRepository)
-		order.NewHTTPHandler(orderUsecase, defaultTimeout).InitRoutes(e)
+		orderUsecase := order.NewUsecase(producer, validator, orderRepository, userRepository)
+		order.NewHTTPHandler(orderUsecase, defaultTimeout).InitRoutes(e, cfg.Security)
 	}
 
 	// Graceful shutdown

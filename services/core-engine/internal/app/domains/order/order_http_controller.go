@@ -7,7 +7,9 @@ import (
 
 	"github.com/labstack/echo/v4"
 
+	"core-engine/config"
 	"core-engine/internal/app/domains/order/model"
+	httpMiddleware "core-engine/internal/app/middleware/http"
 	"core-engine/pkg/response"
 )
 
@@ -16,22 +18,25 @@ type httpHandler struct {
 	orderUsecase model.Usecase
 }
 
-func NewHTTPHandler(orderUsecase model.Usecase, timeout time.Duration) interface{ InitRoutes(e *echo.Echo) } {
+func NewHTTPHandler(orderUsecase model.Usecase, timeout time.Duration) interface {
+	InitRoutes(e *echo.Echo, securityConfig config.Security)
+} {
 	return &httpHandler{
 		timeout:      timeout,
 		orderUsecase: orderUsecase,
 	}
 }
 
-func (h *httpHandler) InitRoutes(e *echo.Echo) {
+func (h *httpHandler) InitRoutes(e *echo.Echo, securityConfig config.Security) {
 	v1 := e.Group("/api/v1/order")
+	v1.Use(httpMiddleware.ValidateJwtToken([]byte(securityConfig.Jwt.Key)))
 	{
 		v1.POST("", h.OrderHandler)
 	}
 }
 
 func (h *httpHandler) OrderHandler(c echo.Context) error {
-	ctx, cancel := context.WithTimeout(context.Background(), h.timeout)
+	ctx, cancel := context.WithTimeout(c.Get("ctx").(context.Context), h.timeout)
 	defer cancel()
 
 	var requestPayload model.RequestOrder
