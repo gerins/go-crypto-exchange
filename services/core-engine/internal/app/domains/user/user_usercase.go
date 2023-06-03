@@ -35,6 +35,7 @@ func (u *usecase) Login(ctx context.Context, loginReq LoginRequest) (LoginRespon
 	}
 
 	// Comparing the password with the hash
+
 	if err = bcrypt.CompareHashAndPassword([]byte(userDetail.Password), []byte(loginReq.Password)); err != nil {
 		log.Context(ctx).Error(err)
 		return LoginResponse{}, ErrInvalidPassword
@@ -49,14 +50,15 @@ func (u *usecase) Login(ctx context.Context, loginReq LoginRequest) (LoginRespon
 	claims["email"] = userDetail.Email
 	claims["exp"] = time.Now().Add(u.securityConfig.Jwt.Duration).Unix()
 
-	// Generate the token stringMC
-	tokenString, err := token.SignedString(u.securityConfig.Jwt.Key)
+	// Generate the token string
+	tokenString, err := token.SignedString([]byte(u.securityConfig.Jwt.Key))
 	if err != nil {
 		log.Context(ctx).Errorf("failed generate token string, %v", err)
 		return LoginResponse{}, ErrInvalidPassword
 	}
 
 	loginResponse := LoginResponse{
+		Email: userDetail.Email,
 		Token: tokenString,
 	}
 

@@ -24,7 +24,7 @@ func (r *repository) FindUserByEmail(ctx context.Context, email string) (User, e
 	defer log.Context(ctx).RecordDuration("find user by email").Stop()
 
 	var user User
-	if err := r.readDB.Where("email = ?", email).Scan(&user).Error; err != nil {
+	if err := r.readDB.Where("email = ?", email).First(&user).Error; err != nil {
 		log.Context(ctx).Error(err)
 		return User{}, err
 	}

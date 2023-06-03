@@ -23,7 +23,7 @@ func NewHTTPHandler(userUsecase Usecase, timeout time.Duration) interface{ InitR
 }
 
 func (h *httpHandler) InitRoutes(e *echo.Echo) {
-	v1 := e.Group("/v1/user")
+	v1 := e.Group("/api/v1/user")
 	{
 		v1.POST("/login", h.LoginHandler)
 		v1.POST("/register", h.RegisterHandler)

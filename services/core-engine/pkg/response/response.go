@@ -9,8 +9,8 @@ import (
 
 type DefaultResponse struct {
 	Code   int         `json:"code"`
-	Status interface{} `json:"msg"`
-	Data   interface{} `json:"payload"`
+	Status interface{} `json:"status"`
+	Data   interface{} `json:"data"`
 }
 
 func Success(c echo.Context, data interface{}) error {

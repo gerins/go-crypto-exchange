@@ -2,7 +2,7 @@ app:
   version: 1.0
   name: core-engine
   host: 0.0.0.0                                 # Server IP
-  port: 8083                                    # Server port
+  port: 8080                                    # Server port
   ctxTimeout: 3m
 grpc:
   host: 0.0.0.0
@@ -21,10 +21,10 @@ dependencies:
   database:
     read:
       host: localhost
-      port: 5434
-      user: user
+      port: 5432
+      user: root
       pass: root
-      name: crypto-exchange
+      name: go-crypto-exchange
       debugLog: true # Please disable in Production Server
       pool:
         maxIdleConn: 5
@@ -33,10 +33,10 @@ dependencies:
         maxIdleLifeTime: 3s
     write:
       host: localhost
-      port: 5434
-      user: user
+      port: 5432
+      user: root
       pass: root
-      name: crypto-exchange
+      name: go-crypto-exchange
       debugLog: true # Please disable in Production Server
       pool:
         maxIdleConn: 5
