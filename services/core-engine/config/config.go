@@ -14,6 +14,7 @@ const (
 type Config struct {
 	App          App
 	GRPC         GRPC
+	Security     Security
 	Dependencies Dependencies
 }
 
@@ -28,6 +29,13 @@ type App struct {
 type GRPC struct {
 	Host string
 	Port string
+}
+
+type Security struct {
+	Jwt struct {
+		Key      string
+		Duration time.Duration
+	}
 }
 
 type Dependencies struct {

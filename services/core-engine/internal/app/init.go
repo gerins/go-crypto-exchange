@@ -26,7 +26,7 @@ func Init(e *echo.Echo, g *grpc.Server, cfg *config.Config) chan bool {
 
 	// Init http router
 	userRepository := user.NewRepository(readDatabase, writeDatabase)
-	userUsecase := user.NewUsecase(validator, userRepository)
+	userUsecase := user.NewUsecase(cfg.Security, validator, userRepository)
 	user.NewHTTPHandler(userUsecase, defaultTimeout).InitRoutes(e)
 
 	// Graceful shutdown
