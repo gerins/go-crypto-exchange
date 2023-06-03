@@ -46,7 +46,7 @@ func (r *repository) GetPairDetail(ctx context.Context, code string) (model.Pair
 }
 
 func (r *repository) GetUserWallet(ctx context.Context, userID, cryptoID int) (model.Wallet, error) {
-	defer log.Context(ctx).RecordDuration("get pair detail").Stop()
+	defer log.Context(ctx).RecordDuration("get user wallet").Stop()
 
 	var wallet model.Wallet
 	if err := r.readDB.Where("user_id = ? AND crypto_id = ?", userID, cryptoID).First(&wallet).Error; err != nil {
