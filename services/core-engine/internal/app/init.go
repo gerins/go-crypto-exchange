@@ -7,6 +7,7 @@ import (
 	"google.golang.org/grpc"
 
 	"core-engine/config"
+	"core-engine/internal/app/domains/order"
 	"core-engine/internal/app/domains/user"
 	"core-engine/pkg/gorm"
 	"core-engine/pkg/kafka"
@@ -25,9 +26,17 @@ func Init(e *echo.Echo, g *grpc.Server, cfg *config.Config) chan bool {
 	)
 
 	// Init http router
-	userRepository := user.NewRepository(readDatabase, writeDatabase)
-	userUsecase := user.NewUsecase(cfg.Security, validator, userRepository)
-	user.NewHTTPHandler(userUsecase, defaultTimeout).InitRoutes(e)
+	{
+		// User Domain
+		userRepository := user.NewRepository(readDatabase, writeDatabase)
+		userUsecase := user.NewUsecase(cfg.Security, validator, userRepository)
+		user.NewHTTPHandler(userUsecase, defaultTimeout).InitRoutes(e)
+
+		// Order Domain
+		orderRepository := order.NewRepository(readDatabase, writeDatabase)
+		orderUsecase := order.NewUsecase(validator, orderRepository, userRepository)
+		order.NewHTTPHandler(orderUsecase, defaultTimeout).InitRoutes(e)
+	}
 
 	// Graceful shutdown
 	go func() {

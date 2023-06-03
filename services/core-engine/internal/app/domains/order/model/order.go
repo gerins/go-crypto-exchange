@@ -3,6 +3,7 @@ package model
 import "context"
 
 type Usecase interface {
+	ProcessOrder(ctx context.Context, orderReq RequestOrder) (Order, error)
 }
 
 type Repository interface {

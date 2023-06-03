@@ -27,7 +27,7 @@ func NewUsecase(validator *validator.Validate, orderRepository model.Repository,
 
 func (u *usecase) ProcessOrder(ctx context.Context, orderReq model.RequestOrder) (model.Order, error) {
 	// Check user detail
-	userDetail, err := u.userRepository.FindUserByEmail(ctx, "")
+	userDetail, err := u.userRepository.FindUserByEmail(ctx, "Price.Price85@hotmail.com")
 	if err != nil {
 		return model.Order{}, err
 	}
