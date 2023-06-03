@@ -78,16 +78,42 @@ INSERT INTO wallet (
 
 ---------------------------------------------------------------------------------------------------------------------
 
-CREATE TYPE order_type AS ENUM ('BUY', 'SELL');
+CREATE TABLE pairs (
+    id                              SERIAL PRIMARY KEY,
+    code                            VARCHAR(256) NOT NULL DEFAULT '',
+    primary_crypto_id               INTEGER NOT NULL REFERENCES crypto(id),
+    secondary_crypto_id             INTEGER NOT NULL REFERENCES crypto(id),
+    status                          BOOLEAN NOT NULL DEFAULT true,
+    created_at                      TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at                      TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    deleted_at                      TIMESTAMP WITH TIME ZONE 
+);
+
+CREATE TRIGGER pairs BEFORE UPDATE ON pairs FOR EACH ROW EXECUTE PROCEDURE update_modified_column();
+
+INSERT INTO pairs (
+    "id",
+    "code",
+    "primary_crypto_id",
+    "secondary_crypto_id",
+    "status",
+    "deleted_at"
+) VALUES (0, '', 0, 0, false, now());
+
+---------------------------------------------------------------------------------------------------------------------
+
+CREATE TYPE order_side AS ENUM ('BUY', 'SELL');
+CREATE TYPE order_type AS ENUM ('MARKET', 'LIMIT', 'STOP_LOSS', 'TAKE_PROFIT')
 CREATE TYPE order_status AS ENUM ('COMPLETE', 'FAILED', 'PROGRESS', 'PARTIAL');
 
 CREATE TABLE orders (
     id                              SERIAL PRIMARY KEY,
-    crypto_id                       INTEGER NOT NULL REFERENCES crypto(id),
     user_id                         INTEGER NOT NULL REFERENCES users(id),
+    pair_id                         INTEGER NOT NULL REFERENCES pairs(id),
     quantity                        DOUBLE PRECISION NOT NULL DEFAULT 0,
     price                           DOUBLE PRECISION NOT NULL DEFAULT 0,
     type                            order_type,
+    side                            order_side,
     status                          order_status,
     created_at                      TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at                      TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -98,11 +124,11 @@ CREATE TRIGGER orders BEFORE UPDATE ON orders FOR EACH ROW EXECUTE PROCEDURE upd
 
 INSERT INTO orders (
     "id",
-    "crypto_id",
     "user_id",
+    "pair_id",
     "quantity",
     "price",
-    "type",
+    "side",
     "status",
     "deleted_at"
 ) VALUES (0, 0, 0, 0, 0, 'BUY', 'COMPLETE', now());

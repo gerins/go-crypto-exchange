@@ -9,7 +9,7 @@ INSERT INTO public.users (full_name,email,phone_number,"password",status) VALUES
 
 -- Init Crypto symbol
 INSERT INTO public.crypto (symbol,status) VALUES
-	 ('IDR',true),
+	 ('IDRT',true),
 	 ('BTC',true),
 	 ('ETH',true),
 	 ('BNB',true),
@@ -20,6 +20,14 @@ INSERT INTO public.crypto (symbol,status) VALUES
 	 ('LTC',true),
 	 ('LINK',true),
 	 ('BCH',true);
+
+-- Init crypto pairs
+INSERT INTO public.pairs (code,primary_crypto_id,secondary_crypto_id,status) VALUES
+	 ('BTCIDRT',2,1,true),
+	 ('DOGEIDRT',6,1,true),
+	 ('ETHIDRT',3,1,true),
+	 ('BNBIDRT',4,1,true),
+	 ('XRPIDRT',7,1,true);
 
 -- Init user wallet
 INSERT INTO public.wallet (user_id,crypto_id,quantity) VALUES
