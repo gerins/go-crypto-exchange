@@ -35,7 +35,6 @@ func (u *usecase) Login(ctx context.Context, loginReq LoginRequest) (LoginRespon
 	}
 
 	// Comparing the password with the hash
-
 	if err = bcrypt.CompareHashAndPassword([]byte(userDetail.Password), []byte(loginReq.Password)); err != nil {
 		log.Context(ctx).Error(err)
 		return LoginResponse{}, ErrInvalidPassword
@@ -78,7 +77,6 @@ func (u *usecase) Register(ctx context.Context, registerReq RegisterRequest) (Us
 		FullName:    registerReq.FullName,
 		Email:       registerReq.Email,
 		PhoneNumber: registerReq.PhoneNumber,
-		Balance:     0,
 		Password:    string(hashedPassword),
 		Status:      true, // Active
 	}

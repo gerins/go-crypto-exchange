@@ -10,7 +10,6 @@ type User struct {
 	FullName    string     `json:"full_name" gorm:"column:full_name;type:varchar;size:255"`
 	Email       string     `json:"email" gorm:"column:email;type:varchar;size:255"`
 	PhoneNumber string     `json:"phone_number" gorm:"column:phone_number;type:varchar;size:255"`
-	Balance     int64      `json:"balance" gorm:"column:balance;type:bigint"`
 	Password    string     `json:"password" gorm:"column:password;type:varchar;size:255"`
 	Status      bool       `json:"status" gorm:"column:status;type:tinyint"`
 	CreatedAt   time.Time  `json:"created_at" gorm:"column:created_at;type:datetime"`
