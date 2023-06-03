@@ -115,6 +115,7 @@ CREATE TABLE orders (
     type                            order_type,
     side                            order_side,
     status                          order_status,
+    transaction_time                BIGINT NOT NULL DEFAULT 0,
     created_at                      TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at                      TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     deleted_at                      TIMESTAMP WITH TIME ZONE 
@@ -128,10 +129,12 @@ INSERT INTO orders (
     "pair_id",
     "quantity",
     "price",
+    "type",
     "side",
     "status",
+    "transaction_time",
     "deleted_at"
-) VALUES (0, 0, 0, 0, 0, 'BUY', 'COMPLETE', now());
+) VALUES (0, 0, 0, 0, 0, 'MARKET', 'BUY', 'COMPLETE', 0, now());
 
 ---------------------------------------------------------------------------------------------------------------------
 
@@ -142,6 +145,7 @@ CREATE TABLE match_orders (
     sell_order_id                   INTEGER NOT NULL REFERENCES orders(id),
     quantity                        DOUBLE PRECISION NOT NULL DEFAULT 0,
     price                           DOUBLE PRECISION NOT NULL DEFAULT 0,
+    transaction_time                BIGINT NOT NULL DEFAULT 0,
     created_at                      TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at                      TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     deleted_at                      TIMESTAMP WITH TIME ZONE 
@@ -156,5 +160,6 @@ INSERT INTO match_orders (
     "sell_order_id",
     "quantity",
     "price",
+    "transaction_time",
     "deleted_at"
-) VALUES (0, 0, 0, 0, 0, 0, now());
+) VALUES (0, 0, 0, 0, 0, 0, 0, now());

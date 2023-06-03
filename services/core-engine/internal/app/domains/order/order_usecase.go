@@ -2,6 +2,7 @@ package order
 
 import (
 	"context"
+	"time"
 
 	"github.com/go-playground/validator/v10"
 
@@ -60,13 +61,14 @@ func (u *usecase) ProcessOrder(ctx context.Context, orderReq model.RequestOrder)
 
 	// Save to table orders
 	newOrder := model.Order{
-		UserID:   userDetail.ID,
-		PairID:   cryptoPairDetail.ID,
-		Quantity: orderReq.Quantity,
-		Price:    orderReq.Price,
-		Type:     orderReq.Type,
-		Side:     orderReq.Side,
-		Status:   model.OrderStatusProgress,
+		UserID:          userDetail.ID,
+		PairID:          cryptoPairDetail.ID,
+		Quantity:        orderReq.Quantity,
+		Price:           orderReq.Price,
+		Type:            orderReq.Type,
+		Side:            orderReq.Side,
+		Status:          model.OrderStatusProgress,
+		TransactionTime: time.Now().Unix(),
 	}
 
 	order, err := u.orderRepository.SaveOrder(ctx, newOrder)

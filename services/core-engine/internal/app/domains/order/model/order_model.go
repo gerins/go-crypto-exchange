@@ -35,17 +35,18 @@ var (
 )
 
 type Order struct {
-	ID        int        `json:"id" gorm:"column:id;type:int;primaryKey;autoIncrement"`
-	UserID    int        `json:"user_id" gorm:"column:user_id;type:int"`
-	PairID    int        `json:"pair_id" gorm:"column:pair_id;type:int"`
-	Quantity  float64    `json:"quantity" gorm:"column:quantity;type:double"`
-	Price     float64    `json:"price" gorm:"column:price;type:double"`
-	Type      Type       `json:"type" gorm:"column:type;type:text"`
-	Side      Side       `json:"side" gorm:"column:side;type:text"`
-	Status    Status     `json:"status" gorm:"column:status;type:text"`
-	CreatedAt time.Time  `json:"created_at" gorm:"column:created_at;type:datetime"`
-	UpdatedAt time.Time  `json:"updated_at" gorm:"column:updated_at;type:datetime"`
-	DeletedAt *time.Time `json:"deleted_at" gorm:"column:deleted_at;type:datetime"`
+	ID              int        `json:"id" gorm:"column:id;type:int;primaryKey;autoIncrement"`
+	UserID          int        `json:"user_id" gorm:"column:user_id;type:int"`
+	PairID          int        `json:"pair_id" gorm:"column:pair_id;type:int"`
+	Quantity        float64    `json:"quantity" gorm:"column:quantity;type:double"`
+	Price           float64    `json:"price" gorm:"column:price;type:double"`
+	Type            Type       `json:"type" gorm:"column:type;type:text"`
+	Side            Side       `json:"side" gorm:"column:side;type:text"`
+	Status          Status     `json:"status" gorm:"column:status;type:text"`
+	TransactionTime int64      `json:"transaction_time" gorm:"column:transaction_time;type:bigint"` // Transaction time
+	CreatedAt       time.Time  `json:"created_at" gorm:"column:created_at;type:datetime"`
+	UpdatedAt       time.Time  `json:"updated_at" gorm:"column:updated_at;type:datetime"`
+	DeletedAt       *time.Time `json:"deleted_at" gorm:"column:deleted_at;type:datetime"`
 }
 
 func (Order) TableName() string {
