@@ -2,23 +2,20 @@ package model
 
 import "encoding/json"
 
-const (
-	BuyOrderCode  = "BUY"
-	SellOrderCode = "SELL"
-)
-
-type Order struct {
-	ID     string `json:"id"`
-	Amount uint64 `json:"amount"`
-	Price  uint64 `json:"price"`
-	Type   string `json:"type"`
+type Trade struct {
+	PairID       int     `json:"pair_id"`
+	TakerOrderID int     `json:"taker_order_id"`
+	MakerOrderID int     `json:"maker_order_id"`
+	Quantity     float64 `json:"quantity"`
+	Price        float64 `json:"price"`
+	TradeTime    int64   `json:"trade_time"`
 }
 
-func (order *Order) FromJSON(msg []byte) error {
-	return json.Unmarshal(msg, order)
+func (trade *Trade) FromJSON(msg []byte) error {
+	return json.Unmarshal(msg, trade)
 }
 
-func (order *Order) ToJSON() []byte {
-	str, _ := json.Marshal(order)
+func (trade *Trade) ToJSON() []byte {
+	str, _ := json.Marshal(trade)
 	return str
 }

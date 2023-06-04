@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/go-redis/redis/v8"
@@ -32,7 +33,7 @@ func NewOrderBook(validator *validator.Validate, kafkaProducer kafka.Producer, c
 
 // Process an order and return the trades generated before adding the remaining amount to the market
 func (book *OrderBook) Execute(ctx context.Context, order model.Order) []model.Trade {
-	if order.Type == model.BuyOrderCode {
+	if order.Side == model.OrderSideBuy {
 		return book.processLimitBuy(order)
 	}
 
@@ -40,72 +41,78 @@ func (book *OrderBook) Execute(ctx context.Context, order model.Order) []model.T
 }
 
 // Process a limit buy order
-func (book *OrderBook) processLimitBuy(order model.Order) []model.Trade {
+func (book *OrderBook) processLimitBuy(reqOrder model.Order) []model.Trade {
 	trades := make([]model.Trade, 0, 1)
 	n := len(book.SellOrders)
+
 	// check if we have at least one matching order
-	if n != 0 || book.SellOrders[n-1].Price <= order.Price {
+	if n != 0 || book.SellOrders[n-1].Price <= reqOrder.Price {
 		// traverse all orders that match
 		for i := n - 1; i >= 0; i-- {
 			sellOrder := book.SellOrders[i]
-			if sellOrder.Price > order.Price {
+			if sellOrder.Price > reqOrder.Price {
 				break
 			}
 			// fill the entire order
-			if sellOrder.Amount >= order.Amount {
-				trades = append(trades, model.Trade{TakerOrderID: order.ID, MakerOrderID: sellOrder.ID, Amount: order.Amount, Price: sellOrder.Price})
-				sellOrder.Amount -= order.Amount
-				if sellOrder.Amount == 0 {
+			if sellOrder.Quantity >= reqOrder.Quantity {
+				tradeTime := time.Now().Unix()
+				trades = append(trades, model.Trade{PairID: reqOrder.PairID, TakerOrderID: reqOrder.ID, MakerOrderID: sellOrder.ID, Quantity: reqOrder.Quantity, Price: sellOrder.Price, TradeTime: tradeTime})
+				sellOrder.Quantity -= reqOrder.Quantity
+				if sellOrder.Quantity == 0 {
 					book.removeSellOrder(i)
 				}
 				return trades
 			}
 			// fill a partial order and continue
-			if sellOrder.Amount < order.Amount {
-				trades = append(trades, model.Trade{TakerOrderID: order.ID, MakerOrderID: sellOrder.ID, Amount: sellOrder.Amount, Price: sellOrder.Price})
-				order.Amount -= sellOrder.Amount
+			if sellOrder.Quantity < reqOrder.Quantity {
+				tradeTime := time.Now().Unix()
+				trades = append(trades, model.Trade{PairID: reqOrder.PairID, TakerOrderID: reqOrder.ID, MakerOrderID: sellOrder.ID, Quantity: sellOrder.Quantity, Price: sellOrder.Price, TradeTime: tradeTime})
+				reqOrder.Quantity -= sellOrder.Quantity
 				book.removeSellOrder(i)
 				continue
 			}
 		}
 	}
+
 	// finally add the remaining order to the list
-	book.addBuyOrder(order)
+	book.addBuyOrder(reqOrder)
 	return trades
 }
 
 // Process a limit sell order
-func (book *OrderBook) processLimitSell(order model.Order) []model.Trade {
+func (book *OrderBook) processLimitSell(reqOrder model.Order) []model.Trade {
 	trades := make([]model.Trade, 0, 1)
 	n := len(book.BuyOrders)
 	// check if we have at least one matching order
-	if n != 0 || book.BuyOrders[n-1].Price >= order.Price {
+	if n != 0 || book.BuyOrders[n-1].Price >= reqOrder.Price {
 		// traverse all orders that match
 		for i := n - 1; i >= 0; i-- {
 			buyOrder := book.BuyOrders[i]
-			if buyOrder.Price < order.Price {
+			if buyOrder.Price < reqOrder.Price {
 				break
 			}
 			// fill the entire order
-			if buyOrder.Amount >= order.Amount {
-				trades = append(trades, model.Trade{TakerOrderID: order.ID, MakerOrderID: buyOrder.ID, Amount: order.Amount, Price: buyOrder.Price})
-				buyOrder.Amount -= order.Amount
-				if buyOrder.Amount == 0 {
+			if buyOrder.Quantity >= reqOrder.Quantity {
+				tradeTime := time.Now().Unix()
+				trades = append(trades, model.Trade{PairID: reqOrder.PairID, TakerOrderID: reqOrder.ID, MakerOrderID: buyOrder.ID, Quantity: reqOrder.Quantity, Price: buyOrder.Price, TradeTime: tradeTime})
+				buyOrder.Quantity -= reqOrder.Quantity
+				if buyOrder.Quantity == 0 {
 					book.removeBuyOrder(i)
 				}
 				return trades
 			}
 			// fill a partial order and continue
-			if buyOrder.Amount < order.Amount {
-				trades = append(trades, model.Trade{TakerOrderID: order.ID, MakerOrderID: buyOrder.ID, Amount: buyOrder.Amount, Price: buyOrder.Price})
-				order.Amount -= buyOrder.Amount
+			if buyOrder.Quantity < reqOrder.Quantity {
+				tradeTime := time.Now().Unix()
+				trades = append(trades, model.Trade{PairID: reqOrder.PairID, TakerOrderID: reqOrder.ID, MakerOrderID: buyOrder.ID, Quantity: buyOrder.Quantity, Price: buyOrder.Price, TradeTime: tradeTime})
+				reqOrder.Quantity -= buyOrder.Quantity
 				book.removeBuyOrder(i)
 				continue
 			}
 		}
 	}
 	// finally add the remaining order to the list
-	book.addSellOrder(order)
+	book.addSellOrder(reqOrder)
 	return trades
 }
 
