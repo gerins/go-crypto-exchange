@@ -42,7 +42,14 @@ type Cache struct {
 }
 
 type MessageBroker struct {
-	Brokers string
+	Brokers  string
+	Group    string
+	Consumer struct {
+		Topic string
+	}
+	Producer struct {
+		Topic string
+	}
 }
 
 // ParseConfigFile is used for parsing config file into struct

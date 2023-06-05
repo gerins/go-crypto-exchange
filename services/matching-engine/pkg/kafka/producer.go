@@ -3,15 +3,17 @@ package kafka
 
 import (
 	"context"
+	"encoding/json"
 	"strings"
 	"time"
 
+	"github.com/gerins/log"
 	"github.com/segmentio/kafka-go"
 )
 
 //counterfeiter:generate . Producer
 type Producer interface {
-	Send(ctx context.Context, topic, key, message string) error
+	Send(ctx context.Context, topic, key string, payload interface{}) error
 }
 
 type producer struct {
@@ -23,7 +25,7 @@ func NewProducer(brokers string) (Producer, *kafka.Writer) {
 		Brokers:      strings.Split(brokers, ","), //
 		Balancer:     &kafka.Murmur2Balancer{},    // Partition balancer
 		MaxAttempts:  3,                           // Limit on how many attempts will be made to deliver a message.
-		BatchTimeout: time.Second,                 // Time limit on how often incomplete message batches will be flushed to kafka.
+		BatchTimeout: 50 * time.Millisecond,       // Time limit on how often incomplete message batches will be flushed to kafka.
 		RequiredAcks: int(kafka.RequireOne),       // Wait for all replicas
 	})
 
@@ -31,11 +33,19 @@ func NewProducer(brokers string) (Producer, *kafka.Writer) {
 }
 
 // Send is used for sending message to Kafka
-func (kp *producer) Send(ctx context.Context, topic, key, message string) error {
+func (kp *producer) Send(ctx context.Context, topic, key string, payload interface{}) error {
+	defer log.Context(ctx).RecordDuration("kafka publisher").Stop()
+
+	payloadJSON, err := json.Marshal(payload)
+	if err != nil {
+		log.Context(ctx).Error(err)
+		return err
+	}
+
 	newMessage := kafka.Message{
 		Topic: topic,
 		Key:   []byte(key),
-		Value: []byte(message),
+		Value: payloadJSON,
 	}
 
 	// Sending message

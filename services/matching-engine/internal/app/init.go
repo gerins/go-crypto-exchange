@@ -18,12 +18,14 @@ func Init(e *echo.Echo, g *grpc.Server, cfg *config.Config) chan bool {
 		exitSignal            = make(chan bool)
 		validator             = validator.New()
 		cache                 = redis.Init(cfg.Dependencies.Cache)
+		kafkaConsumer         = kafka.NewConsumer(cfg.Dependencies.MessageBroker)
 		kafkaProducer, writer = kafka.NewProducer(cfg.Dependencies.MessageBroker.Brokers)
 	)
 
 	// Init http router
-	orderBookUsecase := usecase.NewOrderBook(validator, kafkaProducer, cache)
+	orderBookUsecase := usecase.NewOrderBook(validator, kafkaProducer, cfg.Dependencies.MessageBroker.Producer.Topic, cache)
 	controller.NewHTTPHandler(orderBookUsecase, cfg.App.CtxTimeout).InitRoutes(e)
+	controller.NewQueueHandler(kafkaConsumer, orderBookUsecase, cfg.App.CtxTimeout).StartConsumer()
 
 	// Gracefull shutdown
 	go func() {

@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/go-redis/redis/v8"
+	"github.com/spf13/cast"
 
 	"matching-engine/internal/app/model"
 	"matching-engine/pkg/kafka"
@@ -13,15 +14,21 @@ import (
 
 // orderBook is used for processing data orderBook
 type OrderBook struct {
-	cache         *redis.Client
-	kafkaProducer kafka.Producer
-	validator     *validator.Validate
-	BuyOrders     []model.Order
-	SellOrders    []model.Order
+	cache           *redis.Client
+	kafkaProducer   kafka.Producer
+	validator       *validator.Validate
+	matchOrderTopic string
+	BuyOrders       []model.Order
+	SellOrders      []model.Order
 }
 
 // NewOrderBook returns new order book usecase.
-func NewOrderBook(validator *validator.Validate, kafkaProducer kafka.Producer, cache *redis.Client) *OrderBook {
+func NewOrderBook(
+	validator *validator.Validate,
+	kafkaProducer kafka.Producer,
+	matchOrderTopic string,
+	cache *redis.Client,
+) *OrderBook {
 	return &OrderBook{
 		cache:         cache,
 		kafkaProducer: kafkaProducer,
@@ -32,12 +39,27 @@ func NewOrderBook(validator *validator.Validate, kafkaProducer kafka.Producer, c
 }
 
 // Process an order and return the trades generated before adding the remaining amount to the market
-func (book *OrderBook) Execute(ctx context.Context, order model.Order) []model.Trade {
-	if order.Side == model.OrderSideBuy {
-		return book.processLimitBuy(order)
+func (book *OrderBook) Execute(ctx context.Context, order model.Order) error {
+	var trades []model.Trade
+
+	switch order.Side {
+	case model.OrderSideBuy:
+		trades = book.processLimitBuy(order)
+
+	case model.OrderSideSell:
+		trades = book.processLimitSell(order)
 	}
 
-	return book.processLimitSell(order)
+	if len(trades) == 0 {
+		return nil
+	}
+
+	// Publish to Kafka
+	if err := book.kafkaProducer.Send(ctx, book.matchOrderTopic, cast.ToString(order.ID), trades); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // Process a limit buy order

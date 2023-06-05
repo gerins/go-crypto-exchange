@@ -14,6 +14,8 @@ dependencies:
     database: 0
   messageBroker:
     brokers: localhost:9092
+    group: matching-engine
     consumer:
-      topic: ETH
-      group: matching-engine
+      topic: DOGEIDRT
+    producer:
+      topic: match-order
