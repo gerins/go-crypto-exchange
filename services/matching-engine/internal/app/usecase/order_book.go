@@ -5,6 +5,7 @@ import (
 	"sort"
 	"time"
 
+	"github.com/gerins/log"
 	"github.com/go-playground/validator/v10"
 	"github.com/go-redis/redis/v8"
 	"github.com/spf13/cast"
@@ -15,27 +16,28 @@ import (
 
 // orderBook is used for processing data orderBook
 type OrderBook struct {
+	matchOrderTopic string
 	cache           *redis.Client
 	kafkaProducer   kafka.Producer
 	validator       *validator.Validate
-	matchOrderTopic string
 	BuyOrders       []model.Order
 	SellOrders      []model.Order
 }
 
 // NewOrderBook returns new order book usecase.
 func NewOrderBook(
-	validator *validator.Validate,
-	kafkaProducer kafka.Producer,
 	matchOrderTopic string,
 	cache *redis.Client,
+	kafkaProducer kafka.Producer,
+	validator *validator.Validate,
 ) *OrderBook {
 	return &OrderBook{
-		cache:         cache,
-		kafkaProducer: kafkaProducer,
-		validator:     validator,
-		BuyOrders:     []model.Order{},
-		SellOrders:    []model.Order{},
+		matchOrderTopic: matchOrderTopic,
+		cache:           cache,
+		kafkaProducer:   kafkaProducer,
+		validator:       validator,
+		BuyOrders:       []model.Order{},
+		SellOrders:      []model.Order{},
 	}
 }
 
@@ -54,6 +56,8 @@ func (book *OrderBook) Execute(ctx context.Context, order model.Order) error {
 	if len(trades) == 0 {
 		return nil
 	}
+
+	log.Context(ctx).RespBody = trades
 
 	// Publish to Kafka
 	if err := book.kafkaProducer.Send(ctx, book.matchOrderTopic, cast.ToString(order.ID), trades); err != nil {

@@ -16,9 +16,9 @@ func NewConsumer(cfg config.MessageBroker) *kafka.Reader {
 		Topic:           cfg.Consumer.Topic,
 		MinBytes:        10e3, // 10KB
 		MaxBytes:        10e6, // 10MB
-		MaxWait:         50 * time.Millisecond,
+		MaxWait:         10 * time.Millisecond,
 		ReadLagInterval: -1,
-		CommitInterval:  50 * time.Millisecond,
+		CommitInterval:  time.Second,
 		StartOffset:     kafka.LastOffset,
 	}
 

@@ -23,7 +23,7 @@ func Init(e *echo.Echo, g *grpc.Server, cfg *config.Config) chan bool {
 	)
 
 	// Init http router
-	orderBookUsecase := usecase.NewOrderBook(validator, kafkaProducer, cfg.Dependencies.MessageBroker.Producer.Topic, cache)
+	orderBookUsecase := usecase.NewOrderBook(cfg.Dependencies.MessageBroker.Producer.Topic, cache, kafkaProducer, validator)
 	controller.NewHTTPHandler(orderBookUsecase, cfg.App.CtxTimeout).InitRoutes(e)
 	controller.NewQueueHandler(kafkaConsumer, orderBookUsecase, cfg.App.CtxTimeout).StartConsumer()
 

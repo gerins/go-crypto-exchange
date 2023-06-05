@@ -33,14 +33,26 @@ func (h *queueHandler) StartConsumer() {
 				continue
 			}
 
-			ctx := context.TODO()
-			if err := h.OrderHandler(ctx, kafkaMessage.Value); err != nil {
-				log.Context(ctx).Error(err)
-				return
-			}
+			func() {
+				ctx, cancel := context.WithTimeout(context.Background(), h.timeout)
+				defer func() {
+					log.Context(ctx).Save()
+					cancel()
+				}()
 
-			// Commit message
-			h.kafkaConsumer.CommitMessages(ctx, kafkaMessage)
+				ctx = log.NewRequest().SaveToContext(ctx)
+
+				if err := h.OrderHandler(ctx, kafkaMessage.Value); err != nil {
+					log.Context(ctx).Error(err)
+					return
+				}
+
+				// Commit message
+				if err := h.kafkaConsumer.CommitMessages(ctx, kafkaMessage); err != nil {
+					log.Context(ctx).Error(err)
+					return
+				}
+			}()
 		}
 	}()
 }
@@ -51,6 +63,8 @@ func (h *queueHandler) OrderHandler(ctx context.Context, msg []byte) error {
 		log.Context(ctx).Error(err)
 		return err
 	}
+
+	log.Context(ctx).ReqBody = payload
 
 	if err := h.engine.Execute(ctx, payload); err != nil {
 		return err
