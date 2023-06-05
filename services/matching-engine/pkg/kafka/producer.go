@@ -25,7 +25,7 @@ func NewProducer(brokers string) (Producer, *kafka.Writer) {
 		Brokers:      strings.Split(brokers, ","), //
 		Balancer:     &kafka.Murmur2Balancer{},    // Partition balancer
 		MaxAttempts:  3,                           // Limit on how many attempts will be made to deliver a message.
-		BatchTimeout: 5 * time.Millisecond,        // Time limit on how often incomplete message batches will be flushed to kafka.
+		BatchTimeout: 1 * time.Millisecond,        // Time limit on how often incomplete message batches will be flushed to kafka.
 		RequiredAcks: int(kafka.RequireOne),       // Wait for all replicas
 	})
 
