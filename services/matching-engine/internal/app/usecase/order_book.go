@@ -80,20 +80,40 @@ func (book *OrderBook) processLimitBuy(reqOrder model.Order) []model.Trade {
 			if sellOrder.Price > reqOrder.Price {
 				break
 			}
+
 			// fill the entire order
 			if sellOrder.Quantity >= reqOrder.Quantity {
 				tradeTime := time.Now().Unix()
-				trades = append(trades, model.Trade{PairID: reqOrder.PairID, TakerOrderID: reqOrder.ID, MakerOrderID: sellOrder.ID, Quantity: reqOrder.Quantity, Price: sellOrder.Price, TradeTime: tradeTime})
+				trades = append(trades, model.Trade{
+					PairID:       reqOrder.PairID,
+					TakerOrderID: reqOrder.ID,
+					MakerOrderID: sellOrder.ID,
+					Quantity:     reqOrder.Quantity,
+					Price:        sellOrder.Price,
+					Side:         model.OrderSideBuy,
+					TradeTime:    tradeTime,
+				})
+
 				sellOrder.Quantity -= reqOrder.Quantity
 				if sellOrder.Quantity == 0 {
 					book.removeSellOrder(i)
 				}
 				return trades
 			}
+
 			// fill a partial order and continue
 			if sellOrder.Quantity < reqOrder.Quantity {
 				tradeTime := time.Now().Unix()
-				trades = append(trades, model.Trade{PairID: reqOrder.PairID, TakerOrderID: reqOrder.ID, MakerOrderID: sellOrder.ID, Quantity: sellOrder.Quantity, Price: sellOrder.Price, TradeTime: tradeTime})
+				trades = append(trades, model.Trade{
+					PairID:       reqOrder.PairID,
+					TakerOrderID: reqOrder.ID,
+					MakerOrderID: sellOrder.ID,
+					Quantity:     sellOrder.Quantity,
+					Price:        sellOrder.Price,
+					Side:         model.OrderSideBuy,
+					TradeTime:    tradeTime,
+				})
+
 				reqOrder.Quantity -= sellOrder.Quantity
 				book.removeSellOrder(i)
 				continue
@@ -118,20 +138,38 @@ func (book *OrderBook) processLimitSell(reqOrder model.Order) []model.Trade {
 			if buyOrder.Price < reqOrder.Price {
 				break
 			}
+
 			// fill the entire order
 			if buyOrder.Quantity >= reqOrder.Quantity {
 				tradeTime := time.Now().Unix()
-				trades = append(trades, model.Trade{PairID: reqOrder.PairID, TakerOrderID: reqOrder.ID, MakerOrderID: buyOrder.ID, Quantity: reqOrder.Quantity, Price: buyOrder.Price, TradeTime: tradeTime})
+				trades = append(trades, model.Trade{
+					PairID:       reqOrder.PairID,
+					TakerOrderID: reqOrder.ID,
+					MakerOrderID: buyOrder.ID,
+					Quantity:     reqOrder.Quantity,
+					Price:        buyOrder.Price,
+					Side:         model.OrderSideSell,
+					TradeTime:    tradeTime,
+				})
+
 				buyOrder.Quantity -= reqOrder.Quantity
 				if buyOrder.Quantity == 0 {
 					book.removeBuyOrder(i)
 				}
 				return trades
 			}
+
 			// fill a partial order and continue
 			if buyOrder.Quantity < reqOrder.Quantity {
 				tradeTime := time.Now().Unix()
-				trades = append(trades, model.Trade{PairID: reqOrder.PairID, TakerOrderID: reqOrder.ID, MakerOrderID: buyOrder.ID, Quantity: buyOrder.Quantity, Price: buyOrder.Price, TradeTime: tradeTime})
+				trades = append(trades, model.Trade{PairID: reqOrder.PairID,
+					TakerOrderID: reqOrder.ID,
+					MakerOrderID: buyOrder.ID,
+					Quantity:     buyOrder.Quantity,
+					Price:        buyOrder.Price,
+					Side:         model.OrderSideSell,
+					TradeTime:    tradeTime,
+				})
 				reqOrder.Quantity -= buyOrder.Quantity
 				book.removeBuyOrder(i)
 				continue

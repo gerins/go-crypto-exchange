@@ -8,6 +8,7 @@ type Trade struct {
 	MakerOrderID int     `json:"maker_order_id"`
 	Quantity     float64 `json:"quantity"`
 	Price        float64 `json:"price"`
+	Side         Side    `json:"side"`
 	TradeTime    int64   `json:"trade_time"`
 }
 
