@@ -35,7 +35,7 @@ func NewUsecase(
 	}
 }
 
-func (u *usecase) ProcessOrder(ctx context.Context, orderReq model.RequestOrder) (model.Order, error) {
+func (u *usecase) ProcessOrder(ctx context.Context, orderReq model.OrderRequest) (model.Order, error) {
 	tokenPayload := jwt.GetPayloadFromContext(ctx)
 
 	// Check user detail
@@ -94,4 +94,88 @@ func (u *usecase) ProcessOrder(ctx context.Context, orderReq model.RequestOrder)
 	}
 
 	return order, nil
+}
+
+func (u *usecase) MatchOrder(ctx context.Context, tradeReq model.TradeRequest) error {
+	// Check crypto pair detail
+	cryptoPairDetail, err := u.orderRepository.GetPairDetailByID(ctx, tradeReq.PairID)
+	if err != nil {
+		return err
+	}
+
+	// Get order detail from maker and taker
+	takerOrder, err := u.orderRepository.GetOrder(ctx, tradeReq.TakerOrderID)
+	if err != nil {
+		return err
+	}
+
+	makerOrder, err := u.orderRepository.GetOrder(ctx, tradeReq.MakerOrderID)
+	if err != nil {
+		return err
+	}
+
+	takerOrder.FilledQuantity += tradeReq.Quantity
+	makerOrder.FilledQuantity += tradeReq.Quantity
+
+	// Partial filled
+	takerOrder.Status = model.OrderStatusPartial
+	makerOrder.Status = model.OrderStatusPartial
+
+	// Update status to complete filled
+	if takerOrder.FilledQuantity == takerOrder.Quantity {
+		takerOrder.Status = model.OrderStatusComplete
+	}
+	if makerOrder.FilledQuantity == makerOrder.Quantity {
+		makerOrder.Status = model.OrderStatusComplete
+	}
+
+	// TODO : Add database transaction
+	switch tradeReq.Side {
+	case model.OrderSideBuy:
+		// Update taker (buyer) primary pair wallet
+		if err = u.orderRepository.UpdateUserWallet(ctx, takerOrder.UserID, cryptoPairDetail.PrimaryCryptoID, tradeReq.Quantity); err != nil {
+			return err
+		}
+
+		// Update maker (seller) secondary pair wallet
+		if err = u.orderRepository.UpdateUserWallet(ctx, makerOrder.UserID, cryptoPairDetail.SecondaryCryptoID, tradeReq.Quantity); err != nil {
+			return err
+		}
+
+	case model.OrderSideSell:
+		// Update taker (seller) secondary pair wallet
+		if err = u.orderRepository.UpdateUserWallet(ctx, takerOrder.UserID, cryptoPairDetail.SecondaryCryptoID, tradeReq.Quantity); err != nil {
+			return err
+		}
+
+		// Update maker (buyer) primary pair wallet
+		if err = u.orderRepository.UpdateUserWallet(ctx, makerOrder.UserID, cryptoPairDetail.PrimaryCryptoID, tradeReq.Quantity); err != nil {
+			return err
+		}
+	}
+
+	// Update order status transaction
+	if _, err := u.orderRepository.SaveOrder(ctx, takerOrder); err != nil {
+		return err
+	}
+
+	if _, err := u.orderRepository.SaveOrder(ctx, makerOrder); err != nil {
+		return err
+	}
+
+	// Save to table match order
+	matchOrder := model.MatchOrder{
+		PairID:          tradeReq.PairID,
+		TakerOrderID:    tradeReq.TakerOrderID,
+		MakerOrderID:    tradeReq.MakerOrderID,
+		Quantity:        tradeReq.Quantity,
+		Price:           tradeReq.Price,
+		TransactionTime: tradeReq.TradeTime,
+	}
+
+	if u.orderRepository.SaveMatchOrder(ctx, matchOrder); err != nil {
+		return err
+	}
+
+	return nil
 }

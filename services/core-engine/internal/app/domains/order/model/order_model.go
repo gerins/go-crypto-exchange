@@ -39,6 +39,7 @@ type Order struct {
 	UserID          int        `json:"user_id" gorm:"column:user_id;type:int"`
 	PairID          int        `json:"pair_id" gorm:"column:pair_id;type:int"`
 	Quantity        float64    `json:"quantity" gorm:"column:quantity;type:double"`
+	FilledQuantity  float64    `json:"filled_quantity" gorm:"column:filled_quantity;type:double"`
 	Price           float64    `json:"price" gorm:"column:price;type:double"`
 	Type            Type       `json:"type" gorm:"column:type;type:text"`
 	Side            Side       `json:"side" gorm:"column:side;type:text"`

@@ -39,7 +39,7 @@ func (h *httpHandler) OrderHandler(c echo.Context) error {
 	ctx, cancel := context.WithTimeout(c.Get("ctx").(context.Context), h.timeout)
 	defer cancel()
 
-	var requestPayload model.RequestOrder
+	var requestPayload model.OrderRequest
 	if err := c.Bind(&requestPayload); err != nil {
 		return response.Failed(c, err, http.StatusBadRequest)
 	}

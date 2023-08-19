@@ -111,6 +111,7 @@ CREATE TABLE orders (
     user_id                         INTEGER NOT NULL REFERENCES users(id),
     pair_id                         INTEGER NOT NULL REFERENCES pairs(id),
     quantity                        DOUBLE PRECISION NOT NULL DEFAULT 0,
+    filled_quantity                 DOUBLE PRECISION NOT NULL DEFAULT 0,
     price                           DOUBLE PRECISION NOT NULL DEFAULT 0,
     type                            order_type,
     side                            order_side,
@@ -128,21 +129,22 @@ INSERT INTO orders (
     "user_id",
     "pair_id",
     "quantity",
+    "filled_quantity",
     "price",
     "type",
     "side",
     "status",
     "transaction_time",
     "deleted_at"
-) VALUES (0, 0, 0, 0, 0, 'MARKET', 'BUY', 'COMPLETE', 0, now());
+) VALUES (0, 0, 0, 0, 0, 0, 'MARKET', 'BUY', 'COMPLETE', 0, now());
 
 ---------------------------------------------------------------------------------------------------------------------
 
 CREATE TABLE match_orders (
     id                              SERIAL PRIMARY KEY,
-    crypto_id                       INTEGER NOT NULL REFERENCES crypto(id),
-    buy_order_id                    INTEGER NOT NULL REFERENCES orders(id),
-    sell_order_id                   INTEGER NOT NULL REFERENCES orders(id),
+    pair_id                         INTEGER NOT NULL REFERENCES pairs(id),
+    taker_order_id                  INTEGER NOT NULL REFERENCES orders(id),
+    maker_order_id                  INTEGER NOT NULL REFERENCES orders(id),
     quantity                        DOUBLE PRECISION NOT NULL DEFAULT 0,
     price                           DOUBLE PRECISION NOT NULL DEFAULT 0,
     transaction_time                BIGINT NOT NULL DEFAULT 0,
@@ -155,9 +157,9 @@ CREATE TRIGGER match_orders BEFORE UPDATE ON match_orders FOR EACH ROW EXECUTE P
 
 INSERT INTO match_orders (
     "id",
-    "crypto_id",
-    "buy_order_id",
-    "sell_order_id",
+    "pair_id",
+    "taker_order_id",
+    "maker_order_id",
     "quantity",
     "price",
     "transaction_time",

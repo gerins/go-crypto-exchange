@@ -16,7 +16,7 @@ func (Wallet) TableName() string {
 	return "wallet"
 }
 
-func (userWallet Wallet) IsEnoughBalance(orderReq RequestOrder) bool {
+func (userWallet Wallet) IsEnoughBalance(orderReq OrderRequest) bool {
 	switch orderReq.Side {
 	case OrderSideSell:
 		return userWallet.Quantity >= orderReq.Quantity
