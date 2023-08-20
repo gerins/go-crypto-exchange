@@ -18,6 +18,10 @@ dependencies:
     database: 0
   messageBroker:
     brokers: localhost:9092
+    group: core-engine
+    consumer:
+      topic:
+        matchOrder: match-order
   database:
     read:
       host: localhost

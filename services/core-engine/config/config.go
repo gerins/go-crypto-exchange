@@ -54,7 +54,13 @@ type Cache struct {
 }
 
 type MessageBroker struct {
-	Brokers string
+	Brokers  string
+	Group    string
+	Consumer struct {
+		Topic struct {
+			MatchOrder string
+		}
+	}
 }
 
 type Database struct {

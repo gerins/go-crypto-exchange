@@ -83,6 +83,15 @@ func (u *usecase) ProcessOrder(ctx context.Context, orderReq model.OrderRequest)
 		TransactionTime: time.Now().Unix(),
 	}
 
+	// Deduct user wallet balance
+	switch orderReq.Side {
+	case model.OrderSideSell:
+		u.orderRepository.UpdateUserWallet(ctx, userDetail.ID, userWallet.CryptoID, -orderReq.Quantity)
+	case model.OrderSideBuy:
+		totalAmount := orderReq.Price * orderReq.Quantity
+		u.orderRepository.UpdateUserWallet(ctx, userDetail.ID, userWallet.CryptoID, -totalAmount)
+	}
+
 	order, err := u.orderRepository.SaveOrder(ctx, newOrder)
 	if err != nil {
 		return model.Order{}, err

@@ -45,10 +45,10 @@ func (r *repository) GetOrder(ctx context.Context, id int) (model.Order, error) 
 	return order, nil
 }
 
-func (r *repository) SaveMatchOrder(ctx context.Context, order model.MatchOrder) error {
+func (r *repository) SaveMatchOrder(ctx context.Context, matchOrder model.MatchOrder) error {
 	defer log.Context(ctx).RecordDuration("save match order to database").Stop()
 
-	if err := r.writeDB.Save(&order).Error; err != nil {
+	if err := r.writeDB.Save(&matchOrder).Error; err != nil {
 		log.Context(ctx).Error(err)
 		return err
 	}
