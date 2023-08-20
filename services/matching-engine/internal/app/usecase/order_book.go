@@ -76,45 +76,44 @@ func (book *OrderBook) processLimitBuy(reqOrder model.Order) []model.Trade {
 	if n != 0 && book.SellOrders[n-1].Price <= reqOrder.Price {
 		// traverse all orders that match
 		for i := n - 1; i >= 0; i-- {
-			sellOrder := book.SellOrders[i]
-			if sellOrder.Price > reqOrder.Price {
+			if book.SellOrders[i].Price > reqOrder.Price {
 				break
 			}
 
 			// fill the entire order
-			if sellOrder.Quantity >= reqOrder.Quantity {
+			if book.SellOrders[i].Quantity >= reqOrder.Quantity {
 				tradeTime := time.Now().Unix()
 				trades = append(trades, model.Trade{
 					PairID:       reqOrder.PairID,
 					TakerOrderID: reqOrder.ID,
-					MakerOrderID: sellOrder.ID,
+					MakerOrderID: book.SellOrders[i].ID,
 					Quantity:     reqOrder.Quantity,
-					Price:        sellOrder.Price,
+					Price:        book.SellOrders[i].Price,
 					Side:         model.OrderSideBuy,
 					TradeTime:    tradeTime,
 				})
 
-				sellOrder.Quantity -= reqOrder.Quantity
-				if sellOrder.Quantity == 0 {
+				book.SellOrders[i].Quantity -= reqOrder.Quantity
+				if book.SellOrders[i].Quantity == 0 {
 					book.removeSellOrder(i)
 				}
 				return trades
 			}
 
 			// fill a partial order and continue
-			if sellOrder.Quantity < reqOrder.Quantity {
+			if book.SellOrders[i].Quantity < reqOrder.Quantity {
 				tradeTime := time.Now().Unix()
 				trades = append(trades, model.Trade{
 					PairID:       reqOrder.PairID,
 					TakerOrderID: reqOrder.ID,
-					MakerOrderID: sellOrder.ID,
-					Quantity:     sellOrder.Quantity,
-					Price:        sellOrder.Price,
+					MakerOrderID: book.SellOrders[i].ID,
+					Quantity:     book.SellOrders[i].Quantity,
+					Price:        book.SellOrders[i].Price,
 					Side:         model.OrderSideBuy,
 					TradeTime:    tradeTime,
 				})
 
-				reqOrder.Quantity -= sellOrder.Quantity
+				reqOrder.Quantity -= book.SellOrders[i].Quantity
 				book.removeSellOrder(i)
 				continue
 			}
@@ -134,43 +133,42 @@ func (book *OrderBook) processLimitSell(reqOrder model.Order) []model.Trade {
 	if n != 0 && book.BuyOrders[n-1].Price >= reqOrder.Price {
 		// traverse all orders that match
 		for i := n - 1; i >= 0; i-- {
-			buyOrder := book.BuyOrders[i]
-			if buyOrder.Price < reqOrder.Price {
+			if book.BuyOrders[i].Price < reqOrder.Price {
 				break
 			}
 
 			// fill the entire order
-			if buyOrder.Quantity >= reqOrder.Quantity {
+			if book.BuyOrders[i].Quantity >= reqOrder.Quantity {
 				tradeTime := time.Now().Unix()
 				trades = append(trades, model.Trade{
 					PairID:       reqOrder.PairID,
 					TakerOrderID: reqOrder.ID,
-					MakerOrderID: buyOrder.ID,
+					MakerOrderID: book.BuyOrders[i].ID,
 					Quantity:     reqOrder.Quantity,
-					Price:        buyOrder.Price,
+					Price:        book.BuyOrders[i].Price,
 					Side:         model.OrderSideSell,
 					TradeTime:    tradeTime,
 				})
 
-				buyOrder.Quantity -= reqOrder.Quantity
-				if buyOrder.Quantity == 0 {
+				book.BuyOrders[i].Quantity -= reqOrder.Quantity
+				if book.BuyOrders[i].Quantity == 0 {
 					book.removeBuyOrder(i)
 				}
 				return trades
 			}
 
 			// fill a partial order and continue
-			if buyOrder.Quantity < reqOrder.Quantity {
+			if book.BuyOrders[i].Quantity < reqOrder.Quantity {
 				tradeTime := time.Now().Unix()
 				trades = append(trades, model.Trade{PairID: reqOrder.PairID,
 					TakerOrderID: reqOrder.ID,
-					MakerOrderID: buyOrder.ID,
-					Quantity:     buyOrder.Quantity,
-					Price:        buyOrder.Price,
+					MakerOrderID: book.BuyOrders[i].ID,
+					Quantity:     book.BuyOrders[i].Quantity,
+					Price:        book.BuyOrders[i].Price,
 					Side:         model.OrderSideSell,
 					TradeTime:    tradeTime,
 				})
-				reqOrder.Quantity -= buyOrder.Quantity
+				reqOrder.Quantity -= book.BuyOrders[i].Quantity
 				book.removeBuyOrder(i)
 				continue
 			}
