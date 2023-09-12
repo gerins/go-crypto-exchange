@@ -76,6 +76,15 @@ func (u *usecase) ProcessOrder(ctx context.Context, orderReq model.OrderRequest)
 		return model.Order{}, model.ErrInsufficientBalance
 	}
 
+	// Deduct user wallet balance
+	switch orderReq.Side {
+	case model.OrderSideSell:
+		u.orderRepository.UpdateUserWallet(ctx, userDetail.ID, userWallet.CryptoID, -orderReq.Quantity)
+	case model.OrderSideBuy:
+		totalAmount := orderReq.Price * orderReq.Quantity
+		u.orderRepository.UpdateUserWallet(ctx, userDetail.ID, userWallet.CryptoID, -totalAmount)
+	}
+
 	// Save to table orders
 	newOrder := model.Order{
 		UserID:          userDetail.ID,
@@ -86,15 +95,6 @@ func (u *usecase) ProcessOrder(ctx context.Context, orderReq model.OrderRequest)
 		Side:            orderReq.Side,
 		Status:          model.OrderStatusProgress,
 		TransactionTime: time.Now().Unix(),
-	}
-
-	// Deduct user wallet balance
-	switch orderReq.Side {
-	case model.OrderSideSell:
-		u.orderRepository.UpdateUserWallet(ctx, userDetail.ID, userWallet.CryptoID, -orderReq.Quantity)
-	case model.OrderSideBuy:
-		totalAmount := orderReq.Price * orderReq.Quantity
-		u.orderRepository.UpdateUserWallet(ctx, userDetail.ID, userWallet.CryptoID, -totalAmount)
 	}
 
 	order, err := u.orderRepository.SaveOrder(ctx, newOrder)
