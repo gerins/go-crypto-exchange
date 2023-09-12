@@ -35,7 +35,7 @@ func Init(e *echo.Echo, g *grpc.Server, cfg *config.Config) chan bool {
 
 		// Order Domain
 		orderRepository := order.NewRepository(readDatabase, writeDatabase)
-		orderUsecase := order.NewUsecase(producer, validator, orderRepository, userRepository)
+		orderUsecase := order.NewUsecase(writeDatabase, producer, validator, orderRepository, userRepository)
 		order.NewHTTPHandler(orderUsecase, defaultTimeout).InitRoutes(e, cfg.Security)
 		order.NewQueueHandler(matchOrderConsumer, orderUsecase, defaultTimeout).StartConsumer()
 	}

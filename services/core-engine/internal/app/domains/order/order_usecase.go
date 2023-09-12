@@ -6,14 +6,17 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/spf13/cast"
+	"gorm.io/gorm"
 
 	"core-engine/internal/app/domains/order/model"
 	"core-engine/internal/app/domains/user"
+	gormpkg "core-engine/pkg/gorm"
 	"core-engine/pkg/jwt"
 	"core-engine/pkg/kafka"
 )
 
 type usecase struct {
+	writeDB         *gorm.DB
 	kafkaProducer   kafka.Producer
 	validator       *validator.Validate
 	orderRepository model.Repository
@@ -22,12 +25,14 @@ type usecase struct {
 
 // NewUsecase returns new order usecase.
 func NewUsecase(
+	writeDB *gorm.DB,
 	kafkaProducer kafka.Producer,
 	validator *validator.Validate,
 	orderRepository model.Repository,
 	userRepository user.Repository,
 ) model.Usecase {
 	return &usecase{
+		writeDB:         writeDB,
 		kafkaProducer:   kafkaProducer,
 		validator:       validator,
 		orderRepository: orderRepository,
@@ -138,7 +143,13 @@ func (u *usecase) MatchOrder(ctx context.Context, tradeReq model.TradeRequest) e
 		makerOrder.Status = model.OrderStatusComplete
 	}
 
-	// TODO : Add database transaction
+	ctx, tx, err := gormpkg.InitTransactionToContext(ctx, u.writeDB)
+	if err != nil {
+		return err
+	}
+
+	defer tx.Rollback()
+
 	switch tradeReq.Side {
 	case model.OrderSideBuy:
 		// Update taker (buyer) primary pair wallet
@@ -182,9 +193,9 @@ func (u *usecase) MatchOrder(ctx context.Context, tradeReq model.TradeRequest) e
 		TransactionTime: tradeReq.TradeTime,
 	}
 
-	if u.orderRepository.SaveMatchOrder(ctx, matchOrder); err != nil {
+	if err = u.orderRepository.SaveMatchOrder(ctx, matchOrder); err != nil {
 		return err
 	}
 
-	return nil
+	return tx.Commit().Error
 }

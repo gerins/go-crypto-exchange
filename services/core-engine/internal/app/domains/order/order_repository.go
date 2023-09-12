@@ -7,6 +7,7 @@ import (
 	"gorm.io/gorm"
 
 	"core-engine/internal/app/domains/order/model"
+	gormpkg "core-engine/pkg/gorm"
 )
 
 type repository struct {
@@ -25,7 +26,12 @@ func NewRepository(readDB *gorm.DB, writeDB *gorm.DB) model.Repository {
 func (r *repository) SaveOrder(ctx context.Context, order model.Order) (model.Order, error) {
 	defer log.Context(ctx).RecordDuration("save order detail to database").Stop()
 
-	if err := r.writeDB.Save(&order).Error; err != nil {
+	writeDB := r.writeDB
+	if tx := gormpkg.GetTransactionFromContext(ctx); tx != nil {
+		writeDB = tx
+	}
+
+	if err := writeDB.Save(&order).Error; err != nil {
 		log.Context(ctx).Error(err)
 		return model.Order{}, err
 	}
@@ -48,7 +54,12 @@ func (r *repository) GetOrder(ctx context.Context, id int) (model.Order, error) 
 func (r *repository) SaveMatchOrder(ctx context.Context, matchOrder model.MatchOrder) error {
 	defer log.Context(ctx).RecordDuration("save match order to database").Stop()
 
-	if err := r.writeDB.Save(&matchOrder).Error; err != nil {
+	writeDB := r.writeDB
+	if tx := gormpkg.GetTransactionFromContext(ctx); tx != nil {
+		writeDB = tx
+	}
+
+	if err := writeDB.Save(&matchOrder).Error; err != nil {
 		log.Context(ctx).Error(err)
 		return err
 	}
@@ -96,9 +107,13 @@ func (r *repository) GetUserWallet(ctx context.Context, userID, cryptoID int) (m
 func (r *repository) UpdateUserWallet(ctx context.Context, userID, cryptoID int, amount float64) error {
 	defer log.Context(ctx).RecordDuration("update user wallet").Stop()
 
-	rawQuery := `UPDATE wallet SET quantity = quantity + ? WHERE user_id = ? AND crypto_id = ?`
+	writeDB := r.writeDB
+	if tx := gormpkg.GetTransactionFromContext(ctx); tx != nil {
+		writeDB = tx
+	}
 
-	if err := r.writeDB.Exec(rawQuery, amount, userID, cryptoID).Error; err != nil {
+	rawQuery := `UPDATE wallet SET quantity = quantity + ? WHERE user_id = ? AND crypto_id = ?`
+	if err := writeDB.Exec(rawQuery, amount, userID, cryptoID).Error; err != nil {
 		log.Context(ctx).Error(err)
 		return err
 	}
