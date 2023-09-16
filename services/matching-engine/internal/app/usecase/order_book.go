@@ -16,6 +16,7 @@ import (
 
 // orderBook is used for processing data orderBook
 type OrderBook struct {
+	pairCode        string
 	matchOrderTopic string
 	cache           *redis.Client
 	kafkaProducer   kafka.Producer
@@ -26,12 +27,14 @@ type OrderBook struct {
 
 // NewOrderBook returns new order book usecase.
 func NewOrderBook(
+	pairCode string,
 	matchOrderTopic string,
 	cache *redis.Client,
 	kafkaProducer kafka.Producer,
 	validator *validator.Validate,
 ) *OrderBook {
 	return &OrderBook{
+		pairCode:        pairCode,
 		matchOrderTopic: matchOrderTopic,
 		cache:           cache,
 		kafkaProducer:   kafkaProducer,
@@ -85,6 +88,7 @@ func (book *OrderBook) processLimitBuy(reqOrder model.Order) []model.Trade {
 				tradeTime := time.Now().Unix()
 				trades = append(trades, model.Trade{
 					PairID:       reqOrder.PairID,
+					PairCode:     book.pairCode,
 					TakerOrderID: reqOrder.ID,
 					MakerOrderID: book.SellOrders[i].ID,
 					Quantity:     reqOrder.Quantity,
@@ -105,6 +109,7 @@ func (book *OrderBook) processLimitBuy(reqOrder model.Order) []model.Trade {
 				tradeTime := time.Now().Unix()
 				trades = append(trades, model.Trade{
 					PairID:       reqOrder.PairID,
+					PairCode:     book.pairCode,
 					TakerOrderID: reqOrder.ID,
 					MakerOrderID: book.SellOrders[i].ID,
 					Quantity:     book.SellOrders[i].Quantity,
@@ -142,6 +147,7 @@ func (book *OrderBook) processLimitSell(reqOrder model.Order) []model.Trade {
 				tradeTime := time.Now().Unix()
 				trades = append(trades, model.Trade{
 					PairID:       reqOrder.PairID,
+					PairCode:     book.pairCode,
 					TakerOrderID: reqOrder.ID,
 					MakerOrderID: book.BuyOrders[i].ID,
 					Quantity:     reqOrder.Quantity,
@@ -160,7 +166,9 @@ func (book *OrderBook) processLimitSell(reqOrder model.Order) []model.Trade {
 			// fill a partial order and continue
 			if book.BuyOrders[i].Quantity < reqOrder.Quantity {
 				tradeTime := time.Now().Unix()
-				trades = append(trades, model.Trade{PairID: reqOrder.PairID,
+				trades = append(trades, model.Trade{
+					PairID:       reqOrder.PairID,
+					PairCode:     book.pairCode,
 					TakerOrderID: reqOrder.ID,
 					MakerOrderID: book.BuyOrders[i].ID,
 					Quantity:     book.BuyOrders[i].Quantity,

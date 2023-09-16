@@ -4,6 +4,7 @@ import "encoding/json"
 
 type Trade struct {
 	PairID       int     `json:"pair_id"`
+	PairCode     string  `json:"pair_code"`
 	TakerOrderID int     `json:"taker_order_id"`
 	MakerOrderID int     `json:"maker_order_id"`
 	Quantity     float64 `json:"quantity"`

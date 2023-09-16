@@ -29,7 +29,7 @@ dependencies:
       user: root
       pass: admin
       name: go-crypto-exchange
-      debugLog: true # Please disable in Production Server
+      debugLog: false # Please disable in Production Server
       pool:
         maxIdleConn: 5
         maxOpenConn: 100 
@@ -41,7 +41,7 @@ dependencies:
       user: root
       pass: admin
       name: go-crypto-exchange
-      debugLog: true # Please disable in Production Server
+      debugLog: false # Please disable in Production Server
       pool:
         maxIdleConn: 5
         maxOpenConn: 100 
