@@ -21,7 +21,7 @@ func Init(e *echo.Echo, g *grpc.Server, cfg *config.Config) chan bool {
 		defaultTimeout     = cfg.App.HTTP.CtxTimeout
 		readDatabase       = gorm.Init(cfg.Dependencies.Database.Read)
 		writeDatabase      = gorm.Init(cfg.Dependencies.Database.Write)
-		_                  = redis.Init(cfg.Dependencies.Cache)
+		redis              = redis.Init(cfg.Dependencies.Cache)
 		matchOrderConsumer = kafka.NewConsumer(cfg.Dependencies.MessageBroker, cfg.Dependencies.MessageBroker.Consumer.Topic.MatchOrder)
 		producer, writer   = kafka.NewProducer(cfg.Dependencies.MessageBroker.Brokers)
 	)
@@ -45,8 +45,28 @@ func Init(e *echo.Echo, g *grpc.Server, cfg *config.Config) chan bool {
 		<-exitSignal // Receive exit signal
 		log.Info("disconnecting service dependencies")
 
+		if err := matchOrderConsumer.Close(); err != nil {
+			log.Error(err)
+		}
+
 		if err := writer.Close(); err != nil {
 			log.Error(err)
+		}
+
+		if err := redis.Close(); err != nil {
+			log.Error(err)
+		}
+
+		if readDatabase, err := readDatabase.DB(); err == nil {
+			if err = readDatabase.Close(); err != nil {
+				log.Error(err)
+			}
+		}
+
+		if writeDatabase, err := writeDatabase.DB(); err == nil {
+			if err = writeDatabase.Close(); err != nil {
+				log.Error(err)
+			}
 		}
 
 		log.Info("finished disconnecting service dependencies")
