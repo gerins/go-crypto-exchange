@@ -41,7 +41,7 @@ func (s *HTTPServer) Run() chan bool {
 	// Start server
 	go func() {
 		s.Server.HideBanner = true
-		address := fmt.Sprintf("%v:%v", s.cfg.App.Host, s.cfg.App.Port)
+		address := fmt.Sprintf("%v:%v", s.cfg.App.HTTP.Host, s.cfg.App.HTTP.Port)
 		if err := s.Server.Start(address); err != nil {
 			// ErrServerClosed is expected behavior when exiting app
 			if !errors.Is(err, http.ErrServerClosed) {

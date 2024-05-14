@@ -25,7 +25,7 @@ func NewGRPCServer(cfg *config.Config) *GRPCServer {
 
 func (s *GRPCServer) Run() chan bool {
 	// Run GRPC Server
-	grpcAddress := fmt.Sprintf("%s:%s", s.cfg.GRPC.Host, s.cfg.GRPC.Port)
+	grpcAddress := fmt.Sprintf("%s:%s", s.cfg.App.GRPC.Host, s.cfg.App.GRPC.Port)
 	listen, err := net.Listen("tcp", grpcAddress)
 	if err != nil {
 		log.Fatalf("failed init grpc tcp server, %v", err)

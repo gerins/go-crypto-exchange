@@ -18,7 +18,7 @@ func Init(e *echo.Echo, g *grpc.Server, cfg *config.Config) chan bool {
 	var (
 		exitSignal         = make(chan bool)
 		validator          = validator.New()
-		defaultTimeout     = cfg.App.CtxTimeout
+		defaultTimeout     = cfg.App.HTTP.CtxTimeout
 		readDatabase       = gorm.Init(cfg.Dependencies.Database.Read)
 		writeDatabase      = gorm.Init(cfg.Dependencies.Database.Write)
 		_                  = redis.Init(cfg.Dependencies.Cache)

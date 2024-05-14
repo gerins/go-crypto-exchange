@@ -1,12 +1,13 @@
 app:
   version: 1.0
   name: core-engine
-  host: 0.0.0.0                                 # Server IP
-  port: 8080                                    # Server port
-  ctxTimeout: 3m
-grpc:
-  host: 0.0.0.0
-  port: 8081
+  http:
+    host: 0.0.0.0                                 # Server IP
+    port: 8080                                    # Server port
+    ctxTimeout: 3m
+  grpc:
+    host: 0.0.0.0
+    port: 8081
 security:
   jwt:
     key: admin

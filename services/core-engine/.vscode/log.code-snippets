@@ -1,0 +1,37 @@
+{
+	// Place your legolas workspace snippets here. Each snippet is defined under a snippet name and has a scope, prefix, body and 
+	// description. Add comma separated ids of the languages where the snippet is applicable in the scope field. If scope 
+	// is left empty or omitted, the snippet gets applied to all languages. The prefix is what is 
+	// used to trigger the snippet and the body will be expanded and inserted. Possible variables are: 
+	// $1, $2 for tab stops, $0 for the final cursor position, and ${1:label}, ${2:another} for placeholders. 
+	// Placeholders with the same ids are connected.
+	"Log context": {
+		"prefix": "lcx",
+		"body": [
+			"log.Context(ctx).$0"
+		],
+		"description": "Add subLog to request log"
+	},
+	"Log context duration": {
+		"prefix": "lcxd",
+		"body": [
+			"timeRecord = log.Context(ctx).RecordDuration($0)",
+			"timeRecord.Stop()"
+		],
+		"description": "Add subLog total process duration"
+	},
+	"Log context duration short": {
+		"prefix": "lcxds",
+		"body": [
+			"defer log.Context(ctx).RecordDuration($0).Stop()"
+		],
+		"description": "Add subLog total process duration short version"
+	},
+	"Log context Error": {
+		"prefix": "lcxe",
+		"body": [
+			"log.Context(ctx).Error(err$0)"
+		],
+		"description": "Add subLog error to request log"
+	}
+}

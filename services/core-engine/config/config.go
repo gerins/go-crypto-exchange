@@ -13,14 +13,18 @@ const (
 
 type Config struct {
 	App          App
-	GRPC         GRPC
 	Security     Security
 	Dependencies Dependencies
 }
 
 type App struct {
-	Name       string
-	Version    string
+	Name    string
+	Version string
+	HTTP    HTTP
+	GRPC    GRPC
+}
+
+type HTTP struct {
 	Host       string
 	Port       string
 	CtxTimeout time.Duration
