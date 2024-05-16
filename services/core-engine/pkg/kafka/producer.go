@@ -11,7 +11,7 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
-//counterfeiter:generate . Producer
+//counterfeiter:generate -o ./mock . Producer
 type Producer interface {
 	Send(ctx context.Context, topic, key string, payload interface{}) error
 }

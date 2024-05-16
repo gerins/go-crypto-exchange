@@ -1,3 +1,4 @@
+//go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -generate
 package user
 
 import (
@@ -21,11 +22,13 @@ func (User) TableName() string {
 	return "users"
 }
 
+//counterfeiter:generate -o ./mock . Usecase
 type Usecase interface {
 	Login(ctx context.Context, loginReq LoginRequest) (LoginResponse, error)
 	Register(ctx context.Context, registerReq RegisterRequest) (User, error)
 }
 
+//counterfeiter:generate -o ./mock . Repository
 type Repository interface {
 	FindUserByEmail(ctx context.Context, email string) (User, error)
 	RegisterNewUser(ctx context.Context, user User) (User, error)
