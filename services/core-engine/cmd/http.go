@@ -30,11 +30,16 @@ func NewHTTPServer(cfg *config.Config) *HTTPServer {
 func (s *HTTPServer) Run() chan bool {
 	// Apply middleware
 	s.Server.Use(middlewareLog.Recover())
-	s.Server.Use(middlewareLog.SetLogRequest())                       // Mandatory
-	s.Server.Use(middleware.BodyDump(middlewareLog.SaveLogRequest())) // Mandatory
+	s.Server.Use(middlewareLog.SetLogRequest()) // Mandatory
+	s.Server.Use(middleware.BodyDumpWithConfig(middleware.BodyDumpConfig{
+		Handler: middlewareLog.SaveLogRequest(),
+		Skipper: func(c echo.Context) bool {
+			return c.Path() == "/"
+		},
+	}))
 
 	// Init app
-	s.Server.GET("/ping", func(c echo.Context) error {
+	s.Server.GET("/", func(c echo.Context) error {
 		return c.String(http.StatusOK, "OK")
 	})
 

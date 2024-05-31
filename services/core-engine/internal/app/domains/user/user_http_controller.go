@@ -31,7 +31,7 @@ func (h *httpHandler) InitRoutes(e *echo.Echo) {
 }
 
 func (h *httpHandler) LoginHandler(c echo.Context) error {
-	ctx, cancel := context.WithTimeout(context.Background(), h.timeout)
+	ctx, cancel := context.WithTimeout(c.Get("ctx").(context.Context), h.timeout)
 	defer cancel()
 
 	var requestPayload LoginRequest
@@ -48,7 +48,7 @@ func (h *httpHandler) LoginHandler(c echo.Context) error {
 }
 
 func (h *httpHandler) RegisterHandler(c echo.Context) error {
-	ctx, cancel := context.WithTimeout(context.Background(), h.timeout)
+	ctx, cancel := context.WithTimeout(c.Get("ctx").(context.Context), h.timeout)
 	defer cancel()
 
 	var requestPayload RegisterRequest

@@ -1,19 +1,20 @@
-package scheduler
+//go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -generate
+
+package schedule
+
+import "context"
 
 const (
 	// Add new value according to your usecase
-	UpdateCampaign Job = "UPDATE_CAMPAIGN"
+	UpdateCampaign Job = "UPDATE"
 )
 
 type (
 	Job string
 
-	JobFunc map[Job]func([]byte) error
+	JobHandler func(context.Context, Schedule) error
 
-	Scheduler interface {
-		NewSchedule(job Job, executionTime int64, payload any) error
-		RestoreScheduler() error
-	}
+	JobHandlerMapping map[Job]JobHandler
 
 	Schedule struct {
 		ID            int    `gorm:"column:id"`
@@ -23,6 +24,11 @@ type (
 		Payload       []byte `gorm:"column:payload"`
 	}
 )
+
+//counterfeiter:generate -o ./mock . Scheduler
+type Scheduler interface {
+	NewSchedule(job Job, executionTime int64, payload any) error
+}
 
 func (Schedule) TableName() string {
 	return "schedule"
