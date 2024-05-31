@@ -15,6 +15,7 @@ type Payload struct {
 	UserID int    `json:"userId"`
 	Email  string `json:"email"`
 	Exp    int64  `json:"exp"`
+	Role   string `json:"role"`
 }
 
 var (
