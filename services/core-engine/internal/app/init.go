@@ -19,8 +19,8 @@ func Init(e *echo.Echo, g *grpc.Server, cfg *config.Config) chan bool {
 		exitSignal         = make(chan bool)
 		validator          = validator.New()
 		defaultTimeout     = cfg.App.HTTP.CtxTimeout
-		readDatabase       = gorm.Init(cfg.Dependencies.Database.Read)
-		writeDatabase      = gorm.Init(cfg.Dependencies.Database.Write)
+		readDatabase       = gorm.InitPostgres(cfg.Dependencies.Database.Read)
+		writeDatabase      = gorm.InitPostgres(cfg.Dependencies.Database.Write)
 		redis              = redis.Init(cfg.Dependencies.Cache)
 		matchOrderConsumer = kafka.NewConsumer(cfg.Dependencies.MessageBroker, cfg.Dependencies.MessageBroker.Consumer.Topic.MatchOrder)
 		producer, writer   = kafka.NewProducer(cfg.Dependencies.MessageBroker.Brokers)
