@@ -13,7 +13,7 @@ type repository struct {
 }
 
 // NewRepository returns new user Repository.
-func NewRepository(readDB *gorm.DB, writeDB *gorm.DB) Repository {
+func NewRepository(readDB *gorm.DB, writeDB *gorm.DB) *repository {
 	return &repository{
 		readDB:  readDB,
 		writeDB: writeDB,

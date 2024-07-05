@@ -14,22 +14,24 @@ import (
 )
 
 type httpHandler struct {
-	timeout      time.Duration
-	orderUsecase model.Usecase
+	timeout        time.Duration
+	orderUsecase   model.Usecase
+	securityConfig config.Security
 }
 
-func NewHTTPHandler(orderUsecase model.Usecase, timeout time.Duration) interface {
-	InitRoutes(e *echo.Echo, securityConfig config.Security)
+func NewHTTPHandler(orderUsecase model.Usecase, timeout time.Duration, securityConfig config.Security) interface {
+	InitRoutes(e *echo.Echo)
 } {
 	return &httpHandler{
-		timeout:      timeout,
-		orderUsecase: orderUsecase,
+		timeout:        timeout,
+		orderUsecase:   orderUsecase,
+		securityConfig: securityConfig,
 	}
 }
 
-func (h *httpHandler) InitRoutes(e *echo.Echo, securityConfig config.Security) {
+func (h *httpHandler) InitRoutes(e *echo.Echo) {
 	v1 := e.Group("/api/v1/order")
-	v1.Use(httpMiddleware.ValidateJwtToken([]byte(securityConfig.Jwt.Key)))
+	v1.Use(httpMiddleware.ValidateJwtToken([]byte(h.securityConfig.Jwt.Key)))
 	{
 		v1.POST("", h.OrderHandler)
 	}

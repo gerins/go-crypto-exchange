@@ -30,7 +30,7 @@ func NewUsecase(
 	validator *validator.Validate,
 	orderRepository model.Repository,
 	userRepository user.Repository,
-) model.Usecase {
+) *usecase {
 	return &usecase{
 		writeDB:         writeDB,
 		kafkaProducer:   kafkaProducer,

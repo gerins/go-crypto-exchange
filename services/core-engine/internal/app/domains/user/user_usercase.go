@@ -19,7 +19,7 @@ type usecase struct {
 }
 
 // NewUsecase returns new user usecase.
-func NewUsecase(securityConfig config.Security, validator *validator.Validate, userRepository Repository) Usecase {
+func NewUsecase(securityConfig config.Security, validator *validator.Validate, userRepository Repository) *usecase {
 	return &usecase{
 		securityConfig: securityConfig,
 		validator:      validator,

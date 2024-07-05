@@ -16,7 +16,7 @@ type repository struct {
 }
 
 // NewRepository returns new order Repository.
-func NewRepository(readDB *gorm.DB, writeDB *gorm.DB) model.Repository {
+func NewRepository(readDB *gorm.DB, writeDB *gorm.DB) *repository {
 	return &repository{
 		readDB:  readDB,
 		writeDB: writeDB,
