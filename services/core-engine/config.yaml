@@ -2,20 +2,20 @@ app:
   version: 1.0
   name: core-engine
   http:
-    host: 0.0.0.0                                 # Server IP
-    port: 8080                                    # Server port
+    host: 0.0.0.0             # Server IP
+    port: 8080                # Server port
     ctxTimeout: 3m
   grpc:
     host: 0.0.0.0
     port: 8081
   logging:
-    logToTerminal: true
-    logToFile: true
-    location: /log/
-    fileLogName: server
-    maxAge: 30
-    rotationFile: 24
-    hideSensitiveData: false
+    logToTerminal: true       # Set log output to stdout
+    logToFile: true           # Set log output to file
+    location: /log/           # Location log file will be save in project directory
+    fileLogName: server       # File log name.
+    maxAge: 30                # Days before deleting log file.
+    rotationFile: 24          # Hour before creating new file.
+    hideSensitiveData: false  # Enable hide sensitive data with struct tag `log:"hide"`
 security:
   jwt:
     key: admin
@@ -38,7 +38,7 @@ dependencies:
       user: root
       pass: admin
       name: go-crypto-exchange
-      debugLog: false # Please disable in Production Server
+      debugLog: false         # Disable for optimal performance
       pool:
         maxIdleConn: 5
         maxOpenConn: 100 
@@ -50,7 +50,7 @@ dependencies:
       user: root
       pass: admin
       name: go-crypto-exchange
-      debugLog: false # Please disable in Production Server
+      debugLog: false         # Disable for optimal performance
       pool:
         maxIdleConn: 5
         maxOpenConn: 100 
