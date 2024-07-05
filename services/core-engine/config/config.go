@@ -22,6 +22,7 @@ type App struct {
 	Version string
 	HTTP    HTTP
 	GRPC    GRPC
+	Logging Logging
 }
 
 type HTTP struct {
@@ -33,6 +34,16 @@ type HTTP struct {
 type GRPC struct {
 	Host string
 	Port string
+}
+
+type Logging struct {
+	LogToTerminal     bool   // Set log output to stdout
+	LogToFile         bool   // Set log output to file
+	Location          string // Location log file will be save in project directory
+	FileLogName       string // File log name.
+	MaxAge            int    // Days before deleting log file.
+	RotationFile      int    // Hour before creating new file.
+	HideSensitiveData bool   // Enable hide sensitive data with struct tag `log:"hide"`
 }
 
 type Security struct {

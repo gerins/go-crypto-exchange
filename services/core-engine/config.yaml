@@ -8,6 +8,14 @@ app:
   grpc:
     host: 0.0.0.0
     port: 8081
+  logging:
+    logToTerminal: true
+    logToFile: true
+    location: /log/
+    fileLogName: server
+    maxAge: 30
+    rotationFile: 24
+    hideSensitiveData: false
 security:
   jwt:
     key: admin

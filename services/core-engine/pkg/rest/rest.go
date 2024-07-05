@@ -18,41 +18,34 @@ const (
 )
 
 type rest struct {
-	client *http.Client
+	client            *http.Client
+	addLogToExtraData bool
 }
 
 type Rest interface {
-	Post(ctx context.Context, url string, header map[string]string, payload interface{}) ([]byte, int, error)
-	Put(ctx context.Context, url string, header map[string]string, payload interface{}) ([]byte, int, error)
+	Post(ctx context.Context, url string, header map[string]string, payload any) ([]byte, int, error)
+	Put(ctx context.Context, url string, header map[string]string, payload any) ([]byte, int, error)
 	Get(ctx context.Context, url string, header map[string]string, queryParams map[string]string) ([]byte, int, error)
 	Delete(ctx context.Context, url string, header map[string]string, queryParams map[string]string) ([]byte, int, error)
 }
 
-func New(timeout time.Duration) Rest {
+func New(timeout time.Duration, addLogToExtraData bool) Rest {
 	return &rest{
+		addLogToExtraData: addLogToExtraData,
 		client: &http.Client{
 			Timeout: timeout,
 		},
 	}
 }
 
-func (r *rest) Post(ctx context.Context, url string, header map[string]string, payload interface{}) ([]byte, int, error) {
+func (r *rest) Post(ctx context.Context, url string, header map[string]string, payload any) ([]byte, int, error) {
 	var (
-		req             *http.Request
-		resp            *http.Response
-		response        []byte
-		err             error
-		requestDuration int64        // Total duration when making request
-		startTime       = time.Now() // Time when making request
+		err          error
+		httpResponse *http.Response
+		trace        = log.NewTrace(http.MethodPost, url, header, payload, r.addLogToExtraData)
 	)
 
-	defer func() {
-		if resp != nil {
-			log.Tracing(log.Context(ctx).ProcessID(), url, "POST", resp.StatusCode, response, header, payload, resp.Header, err, requestDuration)
-		} else {
-			log.Tracing(log.Context(ctx).ProcessID(), url, "POST", 0, response, header, payload, nil, err, requestDuration)
-		}
-	}()
+	defer func() { trace.Save(ctx, httpResponse) }() // Logging the response
 
 	// Convert payload to []byte type
 	requestPayload, err := json.Marshal(payload)
@@ -62,15 +55,18 @@ func (r *rest) Post(ctx context.Context, url string, header map[string]string, p
 	}
 
 	// Creating new request with context
-	req, err = http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(requestPayload))
+	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(requestPayload))
 	if err != nil {
 		log.Context(ctx).Errorf("error creating new request, %v", err)
 		return nil, 0, err
 	}
 
-	// Add ProcessID Header, super useful for tracing Log if we ecounter issue in another Service
-	header[ProcessIDContextKey] = log.Context(ctx).ProcessID()
+	if header == nil {
+		header = make(map[string]string)
+	}
+
 	header[ContentType] = ApplicationJSON
+	header[ProcessIDContextKey] = log.Context(ctx).ProcessID()
 
 	// Adding header to the request
 	for key, value := range header {
@@ -78,41 +74,33 @@ func (r *rest) Post(ctx context.Context, url string, header map[string]string, p
 	}
 
 	// Execute http request
-	resp, err = r.client.Do(req)
+	httpResponse, err = r.client.Do(req)
 	if err != nil {
 		log.Context(ctx).Errorf("error when making request, %v", err)
 		return nil, 0, err
 	}
-	defer resp.Body.Close()
+
+	defer httpResponse.Body.Close()
 
 	// Get the response body
-	response, err = io.ReadAll(resp.Body)
+	rawResponse, err := io.ReadAll(httpResponse.Body)
 	if err != nil {
-		log.Context(ctx).Errorf("error reading request body, %v", err)
-		return nil, resp.StatusCode, err
+		log.Context(ctx).Errorf("error reading response body, %v", err)
+		return nil, httpResponse.StatusCode, err
 	}
 
-	requestDuration = time.Since(startTime).Milliseconds()
-	return response, resp.StatusCode, nil
+	trace.RawRespBody = rawResponse
+	return rawResponse, httpResponse.StatusCode, nil
 }
 
-func (r *rest) Put(ctx context.Context, url string, header map[string]string, payload interface{}) ([]byte, int, error) {
+func (r *rest) Put(ctx context.Context, url string, header map[string]string, payload any) ([]byte, int, error) {
 	var (
-		req             *http.Request
-		resp            *http.Response
-		response        []byte
-		err             error
-		requestDuration int64        // Total duration when making request
-		startTime       = time.Now() // Time when making request
+		err          error
+		httpResponse *http.Response
+		trace        = log.NewTrace(http.MethodPost, url, header, payload, r.addLogToExtraData)
 	)
 
-	defer func() {
-		if resp != nil {
-			log.Tracing(log.Context(ctx).ProcessID(), url, "PUT", resp.StatusCode, response, header, payload, resp.Header, err, requestDuration)
-		} else {
-			log.Tracing(log.Context(ctx).ProcessID(), url, "PUT", 0, response, header, payload, nil, err, requestDuration)
-		}
-	}()
+	defer func() { trace.Save(ctx, httpResponse) }() // Logging the response
 
 	// Convert payload to []byte type
 	requestPayload, err := json.Marshal(payload)
@@ -122,15 +110,18 @@ func (r *rest) Put(ctx context.Context, url string, header map[string]string, pa
 	}
 
 	// Creating new request with context
-	req, err = http.NewRequestWithContext(ctx, "PUT", url, bytes.NewBuffer(requestPayload))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPut, url, bytes.NewBuffer(requestPayload))
 	if err != nil {
 		log.Context(ctx).Errorf("error creating new request, %v", err)
 		return nil, 0, err
 	}
 
-	// Add ProcessID Header, super useful for tracing Log if we ecounter issue in another Service
-	header[ProcessIDContextKey] = log.Context(ctx).ProcessID()
+	if header == nil {
+		header = make(map[string]string)
+	}
+
 	header[ContentType] = ApplicationJSON
+	header[ProcessIDContextKey] = log.Context(ctx).ProcessID()
 
 	// Adding header to the request
 	for key, value := range header {
@@ -138,52 +129,46 @@ func (r *rest) Put(ctx context.Context, url string, header map[string]string, pa
 	}
 
 	// Execute http request
-	resp, err = r.client.Do(req)
+	httpResponse, err = r.client.Do(req)
 	if err != nil {
 		log.Context(ctx).Errorf("error when making request, %v", err)
 		return nil, 0, err
 	}
-	defer resp.Body.Close()
+
+	defer httpResponse.Body.Close()
 
 	// Get the response body
-	response, err = io.ReadAll(resp.Body)
+	rawResponse, err := io.ReadAll(httpResponse.Body)
 	if err != nil {
-		log.Context(ctx).Errorf("error reading request body, %v", err)
-		return nil, resp.StatusCode, err
+		log.Context(ctx).Errorf("error reading response body, %v", err)
+		return nil, httpResponse.StatusCode, err
 	}
 
-	requestDuration = time.Since(startTime).Milliseconds()
-	return response, resp.StatusCode, nil
+	trace.RawRespBody = rawResponse
+	return rawResponse, httpResponse.StatusCode, nil
 }
 
 func (r *rest) Get(ctx context.Context, url string, header map[string]string, queryParams map[string]string) ([]byte, int, error) {
 	var (
-		req             *http.Request
-		resp            *http.Response
-		response        []byte
-		err             error
-		requestDuration int64        // Total duration when making request
-		startTime       = time.Now() // Time when making request
+		err          error
+		httpResponse *http.Response
+		trace        = log.NewTrace(http.MethodPost, url, header, queryParams, r.addLogToExtraData)
 	)
 
-	defer func() {
-		if resp != nil {
-			log.Tracing(log.Context(ctx).ProcessID(), url, "GET", resp.StatusCode, response, header, queryParams, resp.Header, err, requestDuration)
-		} else {
-			log.Tracing(log.Context(ctx).ProcessID(), url, "GET", 0, response, header, queryParams, nil, err, requestDuration)
-		}
-	}()
+	defer func() { trace.Save(ctx, httpResponse) }() // Logging the response
 
 	// Creating new request with context
-	req, err = http.NewRequestWithContext(ctx, "GET", url, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		log.Context(ctx).Errorf("error creating new request, %v", err)
 		return nil, 0, err
 	}
 
-	// Add ProcessID Header, super useful for tracing Log if we ecounter issue in another Service
+	if header == nil {
+		header = make(map[string]string)
+	}
+
 	header[ProcessIDContextKey] = log.Context(ctx).ProcessID()
-	header[ContentType] = ApplicationJSON
 
 	// Adding header to the request
 	for key, value := range header {
@@ -200,52 +185,46 @@ func (r *rest) Get(ctx context.Context, url string, header map[string]string, qu
 	req.URL.RawQuery = query.Encode()
 
 	// Execute http request
-	resp, err = r.client.Do(req)
+	httpResponse, err = r.client.Do(req)
 	if err != nil {
 		log.Context(ctx).Errorf("error when making request, %v", err)
 		return nil, 0, err
 	}
-	defer resp.Body.Close()
+
+	defer httpResponse.Body.Close()
 
 	// Get the response body
-	response, err = io.ReadAll(resp.Body)
+	rawResponse, err := io.ReadAll(httpResponse.Body)
 	if err != nil {
-		log.Context(ctx).Errorf("error reading request body, %v", err)
-		return nil, resp.StatusCode, err
+		log.Context(ctx).Errorf("error reading response body, %v", err)
+		return nil, httpResponse.StatusCode, err
 	}
 
-	requestDuration = time.Since(startTime).Milliseconds()
-	return response, resp.StatusCode, nil
+	trace.RawRespBody = rawResponse
+	return rawResponse, httpResponse.StatusCode, nil
 }
 
 func (r *rest) Delete(ctx context.Context, url string, header map[string]string, queryParams map[string]string) ([]byte, int, error) {
 	var (
-		req             *http.Request
-		resp            *http.Response
-		response        []byte
-		err             error
-		requestDuration int64        // Total duration when making request
-		startTime       = time.Now() // Time when making request
+		err          error
+		httpResponse *http.Response
+		trace        = log.NewTrace(http.MethodPost, url, header, queryParams, r.addLogToExtraData)
 	)
 
-	defer func() {
-		if resp != nil {
-			log.Tracing(log.Context(ctx).ProcessID(), url, "DELETE", resp.StatusCode, response, header, queryParams, resp.Header, err, requestDuration)
-		} else {
-			log.Tracing(log.Context(ctx).ProcessID(), url, "DELETE", 0, response, header, queryParams, nil, err, requestDuration)
-		}
-	}()
+	defer func() { trace.Save(ctx, httpResponse) }() // Logging the response
 
 	// Creating new request with context
-	req, err = http.NewRequestWithContext(ctx, "DELETE", url, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, url, nil)
 	if err != nil {
 		log.Context(ctx).Errorf("error creating new request, %v", err)
 		return nil, 0, err
 	}
 
-	// Add ProcessID Header, super useful for tracing Log if we ecounter issue in another Service
+	if header == nil {
+		header = make(map[string]string)
+	}
+
 	header[ProcessIDContextKey] = log.Context(ctx).ProcessID()
-	header[ContentType] = ApplicationJSON
 
 	// Adding header to the request
 	for key, value := range header {
@@ -262,20 +241,21 @@ func (r *rest) Delete(ctx context.Context, url string, header map[string]string,
 	req.URL.RawQuery = query.Encode()
 
 	// Execute http request
-	resp, err = r.client.Do(req)
+	httpResponse, err = r.client.Do(req)
 	if err != nil {
 		log.Context(ctx).Errorf("error when making request, %v", err)
 		return nil, 0, err
 	}
-	defer resp.Body.Close()
+
+	defer httpResponse.Body.Close()
 
 	// Get the response body
-	response, err = io.ReadAll(resp.Body)
+	rawResponse, err := io.ReadAll(httpResponse.Body)
 	if err != nil {
-		log.Context(ctx).Errorf("error reading request body, %v", err)
-		return nil, resp.StatusCode, err
+		log.Context(ctx).Errorf("error reading response body, %v", err)
+		return nil, httpResponse.StatusCode, err
 	}
 
-	requestDuration = time.Since(startTime).Milliseconds()
-	return response, resp.StatusCode, nil
+	trace.RawRespBody = rawResponse
+	return rawResponse, httpResponse.StatusCode, nil
 }

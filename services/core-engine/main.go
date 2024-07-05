@@ -13,7 +13,6 @@ import (
 )
 
 func init() {
-	log.Init()
 	runtime.GOMAXPROCS(runtime.NumCPU())
 }
 
@@ -23,6 +22,17 @@ func main() {
 		http = cmd.NewHTTPServer(cfg)
 		grpc = cmd.NewGRPCServer(cfg)
 	)
+
+	// Init log
+	log.InitWithConfig(log.Config{
+		LogToTerminal:     cfg.App.Logging.LogToTerminal,
+		LogToFile:         cfg.App.Logging.LogToFile,
+		Location:          cfg.App.Logging.Location,
+		FileLogName:       cfg.App.Logging.FileLogName,
+		MaxAge:            cfg.App.Logging.MaxAge,
+		RotationFile:      cfg.App.Logging.RotationFile,
+		HideSensitiveData: cfg.App.Logging.HideSensitiveData,
+	})
 
 	// Init app
 	appExitSignal := app.Init(http.Server, grpc.Server, cfg)
