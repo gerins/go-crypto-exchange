@@ -18,10 +18,10 @@ func Init(e *echo.Echo, g *grpc.Server, cfg *config.Config) chan bool {
 	var (
 		exitSignal         = make(chan bool)
 		validator          = validator.New()
-		defaultTimeout     = cfg.App.HTTP.CtxTimeout
+		apiTimeout         = cfg.App.HTTP.CtxTimeout
+		redis              = redis.Init(cfg.Dependencies.Cache)
 		readDatabase       = gorm.InitPostgres(cfg.Dependencies.Database.Read)
 		writeDatabase      = gorm.InitPostgres(cfg.Dependencies.Database.Write)
-		redis              = redis.Init(cfg.Dependencies.Cache)
 		matchOrderConsumer = kafka.NewConsumer(cfg.Dependencies.MessageBroker, cfg.Dependencies.MessageBroker.Consumer.Topic.MatchOrder)
 		producer, writer   = kafka.NewProducer(cfg.Dependencies.MessageBroker.Brokers)
 	)
@@ -31,13 +31,13 @@ func Init(e *echo.Echo, g *grpc.Server, cfg *config.Config) chan bool {
 		// User Domain
 		userRepository := user.NewRepository(readDatabase, writeDatabase)
 		userUsecase := user.NewUsecase(cfg.Security, validator, userRepository)
-		user.NewHTTPHandler(userUsecase, defaultTimeout).InitRoutes(e)
+		user.NewHTTPHandler(userUsecase, apiTimeout).InitRoutes(e)
 
 		// Order Domain
 		orderRepository := order.NewRepository(readDatabase, writeDatabase)
 		orderUsecase := order.NewUsecase(writeDatabase, producer, validator, orderRepository, userRepository)
-		order.NewHTTPHandler(orderUsecase, defaultTimeout, cfg.Security).InitRoutes(e)
-		order.NewQueueHandler(matchOrderConsumer, orderUsecase, defaultTimeout).StartConsumer()
+		order.NewHTTPHandler(orderUsecase, apiTimeout, cfg.Security).InitRoutes(e)
+		order.NewQueueHandler(matchOrderConsumer, orderUsecase, apiTimeout).StartConsumer()
 	}
 
 	// Graceful shutdown
