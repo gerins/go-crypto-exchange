@@ -7,6 +7,7 @@ require (
 	github.com/go-playground/validator/v10 v10.13.0
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/golang-jwt/jwt v3.2.2+incompatible
+	github.com/gorilla/schema v1.4.1
 	github.com/labstack/echo/v4 v4.10.2
 	github.com/segmentio/kafka-go v0.4.40
 	github.com/spf13/cast v1.5.1
