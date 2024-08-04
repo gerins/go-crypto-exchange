@@ -10,6 +10,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 
 	"core-engine/config"
+	serverError "core-engine/pkg/error"
 )
 
 type usecase struct {
@@ -37,7 +38,7 @@ func (u *usecase) Login(ctx context.Context, loginReq LoginRequest) (LoginRespon
 	// Comparing the password with the hash
 	if err = bcrypt.CompareHashAndPassword([]byte(userDetail.Password), []byte(loginReq.Password)); err != nil {
 		log.Context(ctx).Error(err)
-		return LoginResponse{}, ErrInvalidPassword
+		return LoginResponse{}, serverError.ErrInvalidUsernameOrPassword(err)
 	}
 
 	// Create a new token object
