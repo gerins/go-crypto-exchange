@@ -61,17 +61,13 @@ func (r *rest) Post(ctx context.Context, url string, header map[string]string, p
 		return nil, 0, err
 	}
 
-	if header == nil {
-		header = make(map[string]string)
-	}
-
-	header[ContentType] = ApplicationJSON
-	header[ProcessIDContextKey] = log.Context(ctx).ProcessID()
-
 	// Adding header to the request
 	for key, value := range header {
 		req.Header.Set(key, value)
 	}
+
+	req.Header.Set(ContentType, ApplicationJSON)
+	req.Header.Set(ProcessIDContextKey, log.Context(ctx).ProcessID())
 
 	// Execute http request
 	httpResponse, err = r.client.Do(req)
@@ -116,17 +112,13 @@ func (r *rest) Put(ctx context.Context, url string, header map[string]string, pa
 		return nil, 0, err
 	}
 
-	if header == nil {
-		header = make(map[string]string)
-	}
-
-	header[ContentType] = ApplicationJSON
-	header[ProcessIDContextKey] = log.Context(ctx).ProcessID()
-
 	// Adding header to the request
 	for key, value := range header {
 		req.Header.Set(key, value)
 	}
+
+	req.Header.Set(ContentType, ApplicationJSON)
+	req.Header.Set(ProcessIDContextKey, log.Context(ctx).ProcessID())
 
 	// Execute http request
 	httpResponse, err = r.client.Do(req)
@@ -164,16 +156,12 @@ func (r *rest) Get(ctx context.Context, url string, header map[string]string, qu
 		return nil, 0, err
 	}
 
-	if header == nil {
-		header = make(map[string]string)
-	}
-
-	header[ProcessIDContextKey] = log.Context(ctx).ProcessID()
-
 	// Adding header to the request
 	for key, value := range header {
 		req.Header.Set(key, value)
 	}
+
+	req.Header.Set(ProcessIDContextKey, log.Context(ctx).ProcessID())
 
 	// Building query params
 	query := req.URL.Query()
@@ -220,16 +208,12 @@ func (r *rest) Delete(ctx context.Context, url string, header map[string]string,
 		return nil, 0, err
 	}
 
-	if header == nil {
-		header = make(map[string]string)
-	}
-
-	header[ProcessIDContextKey] = log.Context(ctx).ProcessID()
-
 	// Adding header to the request
 	for key, value := range header {
 		req.Header.Set(key, value)
 	}
+
+	req.Header.Set(ProcessIDContextKey, log.Context(ctx).ProcessID())
 
 	// Building query params
 	query := req.URL.Query()
