@@ -1,0 +1,9 @@
+{
+    "[typescript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+    },
+    "prettier.tabWidth": 4,
+    "prettier.printWidth": 300,
+    "prettier.jsxSingleQuote": true,
+    "prettier.singleQuote": true,
+}
