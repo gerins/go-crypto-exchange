@@ -10,8 +10,8 @@ services:
     environment:
       - DATABASE_MASTER_HOST=postgres
       - DATABASE_SLAVE_HOST=postgres
-      - REDIS_ADDRESS=redis
-      - KAFKA_ADDRESS=kafka
+      - REDIS_ADDRESS=redis:6379
+      - KAFKA_ADDRESS=kafka:9092
 
   matching-engine:
     build: ./services/matching-engine
@@ -20,8 +20,8 @@ services:
     networks:
       - docker-networks
     environment:
-      - REDIS_ADDRESS=redis
-      - KAFKA_ADDRESS=kafka
+      - REDIS_ADDRESS=redis:6379
+      - KAFKA_ADDRESS=kafka:9092
 
   redis:
     image: redis:latest
@@ -40,8 +40,32 @@ services:
       - docker-networks
     environment:
       - POSTGRES_USER=root
-      - POSTGRES_PASSWORD=root
+      - POSTGRES_PASSWORD=admin
       - POSTGRES_DB=default
+
+  zookeeper:
+    image: wurstmeister/zookeeper:3.4.6
+    ports:
+      - "2181:2181"
+    networks:
+      - docker-networks
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  kafka:
+    image: wurstmeister/kafka:2.12-2.2.1
+    ports:
+      - "9092:9092"
+    networks:
+      - docker-networks
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
 
 networks:
   docker-networks:
