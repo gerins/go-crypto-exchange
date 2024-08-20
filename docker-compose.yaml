@@ -58,7 +58,7 @@ services:
       - DATABASE_MASTER_HOST=postgres
       - DATABASE_SLAVE_HOST=postgres
       - REDIS_ADDRESS=redis:6379
-      - KAFKA_ADDRESS=kafka:9092
+      - KAFKA_ADDRESS=kafka:19092
 
   matching-engine:
     build: ./services/matching-engine
@@ -68,7 +68,7 @@ services:
       - docker-networks
     environment:
       - REDIS_ADDRESS=redis:6379
-      - KAFKA_ADDRESS=kafka:9092
+      - KAFKA_ADDRESS=kafka:19092
 
 
 networks:
