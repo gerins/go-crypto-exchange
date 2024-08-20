@@ -2,6 +2,7 @@ package config
 
 import (
 	"log"
+	"os"
 	"time"
 
 	"github.com/spf13/viper"
@@ -66,6 +67,14 @@ func ParseConfigFile(configName string) *Config {
 	config := new(Config)
 	if err := viperConfig.Unmarshal(&config); err != nil {
 		log.Fatalf("failed parsing config, %v", err)
+	}
+
+	// Override with environment variable if exist
+	if env := os.Getenv("REDIS_ADDRESS"); env != "" {
+		config.Dependencies.Cache.Address = env
+	}
+	if env := os.Getenv("KAFKA_ADDRESS"); env != "" {
+		config.Dependencies.MessageBroker.Brokers = env
 	}
 
 	return config

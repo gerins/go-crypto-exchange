@@ -7,6 +7,11 @@ services:
       - 8080:8080
     networks:
       - docker-networks
+    environment:
+      - DATABASE_MASTER_HOST=postgres
+      - DATABASE_SLAVE_HOST=postgres
+      - REDIS_ADDRESS=redis
+      - KAFKA_ADDRESS=kafka
 
   matching-engine:
     build: ./services/matching-engine
@@ -14,6 +19,9 @@ services:
       - 8083:8083
     networks:
       - docker-networks
+    environment:
+      - REDIS_ADDRESS=redis
+      - KAFKA_ADDRESS=kafka
 
   redis:
     image: redis:latest
