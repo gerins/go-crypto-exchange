@@ -40,10 +40,10 @@ dependencies:
       name: go-crypto-exchange
       debugLog: false         # Disable for optimal performance
       pool:
-        maxIdleConn: 5
+        maxIdleConn: 25
         maxOpenConn: 100 
-        maxConnLifeTime: 30s
-        maxIdleLifeTime: 3s
+        maxConnLifeTime: 30m
+        maxIdleLifeTime: 10s
     write:
       host: localhost
       port: 5432
@@ -52,7 +52,7 @@ dependencies:
       name: go-crypto-exchange
       debugLog: false         # Disable for optimal performance
       pool:
-        maxIdleConn: 5
+        maxIdleConn: 25
         maxOpenConn: 100 
-        maxConnLifeTime: 30s
-        maxIdleLifeTime: 3s
+        maxConnLifeTime: 30m
+        maxIdleLifeTime: 10s
