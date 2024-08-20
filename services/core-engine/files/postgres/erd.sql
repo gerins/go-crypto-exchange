@@ -103,7 +103,7 @@ INSERT INTO pairs (
 ---------------------------------------------------------------------------------------------------------------------
 
 CREATE TYPE order_side AS ENUM ('BUY', 'SELL');
-CREATE TYPE order_type AS ENUM ('MARKET', 'LIMIT', 'STOP_LOSS', 'TAKE_PROFIT')
+CREATE TYPE order_type AS ENUM ('MARKET', 'LIMIT', 'STOP_LOSS', 'TAKE_PROFIT');
 CREATE TYPE order_status AS ENUM ('COMPLETE', 'FAILED', 'PROGRESS', 'PARTIAL');
 
 CREATE TABLE orders (
