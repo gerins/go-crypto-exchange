@@ -1,6 +1,53 @@
 version: '3.8'
 
 services:
+  redis:
+    image: redis:latest
+    ports:
+      - 6379:6379
+    networks:
+      - docker-networks
+
+  postgres:
+    image: postgres
+    ports:
+      - 5432:5432
+    volumes:
+      - ./pgdata:/var/lib/postgresql/data
+    networks:
+      - docker-networks
+    environment:
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=admin
+      - POSTGRES_DB=default
+
+  kafka:
+    container_name: kafka
+    image: confluentinc/cp-kafka:7.0.0 #Stable Images
+    restart: unless-stopped
+    ports:
+      - 9092:9092
+      - 19092:19092
+    networks:
+      - docker-networks
+    environment:
+      - KAFKA_LISTENERS=INTERNAL://0.0.0.0:19092,EXTERNAL://0.0.0.0:9092
+      - KAFKA_ADVERTISED_LISTENERS=INTERNAL://kafka:19092,EXTERNAL://localhost:9092
+      - KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+      - KAFKA_INTER_BROKER_LISTENER_NAME=EXTERNAL
+      - KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181
+      - KAFKA_AUTO_CREATE_TOPICS_ENABLE=true
+      - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
+
+  zookeeper:
+    container_name: zookeeper
+    image: zookeeper:3.6.2
+    restart: unless-stopped
+    ports:
+      - 2181:2181
+    networks:
+      - docker-networks
+
   core-engine:
     build: ./services/core-engine
     ports:
@@ -23,52 +70,9 @@ services:
       - REDIS_ADDRESS=redis:6379
       - KAFKA_ADDRESS=kafka:9092
 
-  redis:
-    image: redis:latest
-    ports:
-      - 6379:6379
-    networks:
-      - docker-networks
-
-  postgres:
-    image: postgres
-    ports:
-      - 5432:5432
-    volumes:
-      - ./pgdata:/var/lib/postgresql/data
-    networks:
-      - docker-networks
-    environment:
-      - POSTGRES_USER=root
-      - POSTGRES_PASSWORD=admin
-      - POSTGRES_DB=default
-
-  zookeeper:
-    image: wurstmeister/zookeeper:3.4.6
-    ports:
-      - "2181:2181"
-    networks:
-      - docker-networks
-    environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
-
-  kafka:
-    image: wurstmeister/kafka:2.12-2.2.1
-    ports:
-      - "9092:9092"
-    networks:
-      - docker-networks
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    environment:
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-
 
 networks:
   docker-networks:
     name: docker-networks
     driver: bridge
-    external: true
+    external: false
