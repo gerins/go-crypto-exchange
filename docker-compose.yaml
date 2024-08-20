@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  core-engine:
+    build: ./services/core-engine
+    ports:
+      - 8080:8080
+    networks:
+      - docker-networks
+
+  matching-engine:
+    build: ./services/matching-engine
+    ports:
+      - 8083:8083
+    networks:
+      - docker-networks
+
+  redis:
+    image: redis:latest
+    ports:
+      - 6379:6379
+    networks:
+      - docker-networks
+
+  postgres:
+    image: postgres
+    ports:
+      - 5432:5432
+    volumes:
+      - ./pgdata:/var/lib/postgresql/data
+    networks:
+      - docker-networks
+    environment:
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=root
+      - POSTGRES_DB=default
+
+networks:
+  docker-networks:
+    name: docker-networks
+    driver: bridge
+    external: true
