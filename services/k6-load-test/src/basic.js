@@ -4,50 +4,80 @@ import { check, fail, sleep } from 'k6';
 // Init stage
 export const options = {
     // A number specifying the number of VUs to run concurrently.
-    vus: 10,
+    vus: 1000,
+
     // A string specifying the total duration of the test run.
-    duration: '30s',
+    // Cannot run simultaneously with stages
+    duration: '1m',
 
     // Customize the statistics to include in the summary
-    summaryTrendStats: ['min', 'max', 'mean', 'p(90)', 'p(95)'],
+    summaryTrendStats: ['min', 'max', 'p(90)', 'p(95)'],
 
     // Gradually ramp up or ramp down the number of virtual users (VUs) over time.
-    stages: [
-        { duration: '30s', target: 20 }, // Ramp-up to 20 VUs over 30 seconds
-        { duration: '1m', target: 20 }, // Stay at 20 VUs for 1 minute
-        { duration: '10s', target: 50 }, // Ramp-up to 50 VUs over 10 seconds
-        { duration: '1m', target: 50 }, // Stay at 50 VUs for 1 minute
-        { duration: '30s', target: 0 }, // Ramp-down to 0 VUs over 30 seconds
-    ],
+    // stages: [
+    //     { duration: '30s', target: 20 }, // Ramp-up to 20 VUs over 30 seconds
+    //     { duration: '1m', target: 20 }, // Stay at 20 VUs for 1 minute
+    //     { duration: '10s', target: 50 }, // Ramp-up to 50 VUs over 10 seconds
+    //     { duration: '1m', target: 50 }, // Stay at 50 VUs for 1 minute
+    //     { duration: '30s', target: 0 }, // Ramp-down to 0 VUs over 30 seconds
+    // ],
 };
 
 // (Optional) Setup stage, preparing data before execute test
 // The setup function runs once, before any VUs start their execution.
 // The return value from the setup function is passed to the default function of each VU.
 export function setup() {
-    let totalUser = __ENV.TOTAL_USER || 10; // Access the environment variable of TOTAL_USER
+    const userEmail = ['Price.Price85@hotmail.com', 'Katherine_Trantow@hotmail.com', 'Shaniya.Mayer33@hotmail.com', 'Jayda52@yahoo.com', 'Oliver_Heller81@gmail.com', 'Drew.Lueilwitz@gmail.com'];
 
-    let mockData = { id: 1, title: 'foo' };
-    return mockData;
+    let listToken = [];
+
+    userEmail.forEach((email) => {
+        let params = {
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        };
+        let payload = JSON.stringify({
+            email: email,
+            password: 'admin',
+        });
+
+        let res = http.post('http://localhost:8080/api/v1/user/login', payload, params);
+
+        // Parse the response body as JSON
+        let responseBody = res.json();
+
+        // Ensure the response body contains the expected 'data.token'
+        if (responseBody && responseBody.data && responseBody.data.token) {
+            listToken.push(responseBody.data.token); // Add the token to the listToken array
+        } else {
+            console.log(`Login failed for user: ${email}, response: ${JSON.stringify(responseBody)}`);
+        }
+    });
+
+    return listToken;
 }
 
 // Execution stage
-export default function (mockData) {
+export default function (listToken) {
     // Define the URL to request
-    let url = 'https://jsonplaceholder.typicode.com/posts';
+    let url = 'http://localhost:8080/api/v1/order';
 
     // Define the parameters, including headers if needed
     let params = {
         headers: {
             'Content-Type': 'application/json',
+            Authorization: 'Bearer ' + listToken[getRandomInt(0, 5)],
         },
     };
 
     // Define the payload for a POST request
     let payload = JSON.stringify({
-        title: 'foo',
-        body: 'bar',
-        userId: 1,
+        pair_code: 'DOGEIDRT',
+        quantity: getRandomInt(1, 100),
+        price: getRandomInt(100, 1000),
+        side: getRandomSide(),
+        type: 'LIMIT',
     });
 
     // Make a POST request
@@ -65,9 +95,6 @@ export default function (mockData) {
         fail(`Request failed with status ${res.status}`); // This will return the function
     }
 
-    // Log the response body for debugging (optional)
-    console.log(res.body);
-
     sleep(1);
 }
 
@@ -75,4 +102,14 @@ export default function (mockData) {
 export function teardown(data) {
     // Perform cleanup or analysis
     console.log('Test completed, cleaning up...');
+}
+
+function getRandomInt(min, max) {
+    min = Math.ceil(min);
+    max = Math.floor(max);
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function getRandomSide() {
+    return Math.random() < 0.5 ? 'BUY' : 'SELL';
 }
