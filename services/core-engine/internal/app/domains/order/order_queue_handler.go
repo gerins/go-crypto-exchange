@@ -34,10 +34,7 @@ func (h *queueHandler) StartConsumer() {
 
 			func() {
 				ctx, cancel := context.WithTimeout(context.Background(), h.timeout)
-				defer func() {
-					log.Context(ctx).Save()
-					cancel()
-				}()
+				defer func() { log.Context(ctx).Save(); cancel() }()
 
 				ctx = log.NewRequest().SaveToContext(ctx)
 
