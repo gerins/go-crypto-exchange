@@ -1,9 +1,11 @@
 package response
 
 import (
+	"context"
 	"math"
 	"net/http"
 
+	"github.com/gerins/log"
 	"github.com/labstack/echo/v4"
 
 	serverError "core-engine/pkg/error"
@@ -53,6 +55,7 @@ func Failed(c echo.Context, err error) error {
 	var (
 		generalError = serverError.ErrGeneralError(nil)
 		httpRespCode = generalError.HTTPCode
+		rawError     = err
 	)
 
 	response := DefaultResponse{
@@ -61,12 +64,14 @@ func Failed(c echo.Context, err error) error {
 		Data:    nil,
 	}
 
-	// Check for wrapped error
-	if errWrapper, ok := err.(serverError.ServerError); ok {
-		httpRespCode = errWrapper.HTTPCode
-		response.Code = errWrapper.Code
-		response.Message = errWrapper.Message
+	// Check for wrapped server error
+	if serverErr, ok := err.(serverError.ServerError); ok {
+		rawError = serverErr.RawError
+		httpRespCode = serverErr.HTTPCode
+		response.Code = serverErr.Code
+		response.Message = serverErr.Message
 	}
 
+	log.Context(c.Get("ctx").(context.Context)).ExtraData["error"] = rawError.Error()
 	return c.JSON(httpRespCode, response)
 }
