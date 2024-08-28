@@ -51,8 +51,8 @@ func SuccessList(c echo.Context, data any, page, limit, totalItem int) error {
 
 func Failed(c echo.Context, err error) error {
 	var (
-		generalError = serverError.ErrGeneralError(err)
-		httpCode     = generalError.HTTPCode
+		generalError = serverError.ErrGeneralError(nil)
+		httpRespCode = generalError.HTTPCode
 	)
 
 	response := DefaultResponse{
@@ -61,11 +61,12 @@ func Failed(c echo.Context, err error) error {
 		Data:    nil,
 	}
 
+	// Check for wrapped error
 	if errWrapper, ok := err.(serverError.ServerError); ok {
-		httpCode = errWrapper.HTTPCode
+		httpRespCode = errWrapper.HTTPCode
 		response.Code = errWrapper.Code
 		response.Message = errWrapper.Message
 	}
 
-	return c.JSON(httpCode, response)
+	return c.JSON(httpRespCode, response)
 }
