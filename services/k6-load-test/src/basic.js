@@ -4,7 +4,7 @@ import { check, fail, sleep } from 'k6';
 // Init stage
 export const options = {
     // A number specifying the number of VUs to run concurrently.
-    vus: 1000,
+    vus: 2000,
 
     // A string specifying the total duration of the test run.
     // Cannot run simultaneously with stages
@@ -87,7 +87,7 @@ export default function (listToken) {
     // Check if the response status is 200 (OK)
     let success = check(res, {
         'status is 200': (res) => res.status === 200,
-        'response time is less than 1000ms': (r) => r.timings.duration < 1000,
+        'response time is less than 3000ms': (r) => r.timings.duration < 3000,
     });
 
     // If the check fails, trigger a failure

@@ -41,7 +41,7 @@ dependencies:
       debugLog: false         # Disable for optimal performance
       pool:
         maxIdleConn: 25
-        maxOpenConn: 100 
+        maxOpenConn: 50 
         maxConnLifeTime: 30m
         maxIdleLifeTime: 10s
     write:
@@ -53,6 +53,6 @@ dependencies:
       debugLog: false         # Disable for optimal performance
       pool:
         maxIdleConn: 25
-        maxOpenConn: 100 
+        maxOpenConn: 50 
         maxConnLifeTime: 30m
         maxIdleLifeTime: 10s
