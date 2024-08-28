@@ -2,10 +2,11 @@ package http
 
 import (
 	"context"
-	"net/http"
 
+	"github.com/gerins/log"
 	"github.com/labstack/echo/v4"
 
+	serverError "core-engine/pkg/error"
 	"core-engine/pkg/jwt"
 	"core-engine/pkg/response"
 )
@@ -27,7 +28,8 @@ func ValidateRole(roles ...string) echo.MiddlewareFunc {
 				}
 			}
 
-			return response.Failed(c, "unauthorized user", http.StatusUnauthorized)
+			log.Context(ctx).Warn("unauthorized role")
+			return response.Failed(c, serverError.ErrUnauthorized(nil))
 		}
 	}
 }

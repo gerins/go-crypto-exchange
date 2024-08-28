@@ -2,12 +2,12 @@ package http
 
 import (
 	"context"
-	"net/http"
 	"strings"
 
 	"github.com/gerins/log"
 	"github.com/labstack/echo/v4"
 
+	serverError "core-engine/pkg/error"
 	"core-engine/pkg/jwt"
 	"core-engine/pkg/response"
 )
@@ -36,7 +36,7 @@ func ValidateJwtToken(secretKey []byte) echo.MiddlewareFunc {
 			payload, err := jwt.Validate(tokenString, secretKey)
 			if err != nil {
 				log.Context(ctx).Error(err)
-				return response.Failed(c, err, http.StatusUnauthorized)
+				return response.Failed(c, serverError.ErrUnauthorized(err))
 			}
 
 			ctx = jwt.SavePayloadToContext(ctx, payload)

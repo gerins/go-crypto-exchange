@@ -10,6 +10,7 @@ import (
 
 	"core-engine/internal/app/domains/order/model"
 	"core-engine/internal/app/domains/user"
+	serverError "core-engine/pkg/error"
 	gormpkg "core-engine/pkg/gorm"
 	"core-engine/pkg/jwt"
 	"core-engine/pkg/kafka"
@@ -46,18 +47,18 @@ func (u *usecase) ProcessOrder(ctx context.Context, orderReq model.OrderRequest)
 	// Check user detail
 	userDetail, err := u.userRepository.FindUserByEmail(ctx, tokenPayload.Email)
 	if err != nil {
-		return model.Order{}, err
+		return model.Order{}, serverError.ErrGeneralDatabaseError(err)
 	}
 
 	// Check account status
 	if !userDetail.Status {
-		return model.Order{}, user.ErrUserBlocked // User already deactivated
+		return model.Order{}, serverError.ErrUserBlocked(nil) // User already deactivated
 	}
 
 	// Check crypto pair detail
 	cryptoPairDetail, err := u.orderRepository.GetPairDetail(ctx, orderReq.PairCode)
 	if err != nil {
-		return model.Order{}, err
+		return model.Order{}, serverError.ErrGeneralDatabaseError(err)
 	}
 
 	targetCryptoID := cryptoPairDetail.PrimaryCryptoID
@@ -66,9 +67,11 @@ func (u *usecase) ProcessOrder(ctx context.Context, orderReq model.OrderRequest)
 		targetCryptoID = cryptoPairDetail.SecondaryCryptoID
 	}
 
+	// TODO:Lock all balance activity for this specific user
+
 	userWallet, err := u.orderRepository.GetUserWallet(ctx, userDetail.ID, targetCryptoID)
 	if err != nil {
-		return model.Order{}, err
+		return model.Order{}, serverError.ErrGeneralDatabaseError(err)
 	}
 
 	// Validate user balance
@@ -77,13 +80,21 @@ func (u *usecase) ProcessOrder(ctx context.Context, orderReq model.OrderRequest)
 	}
 
 	// Deduct user wallet balance
+	var errBalanceUpdate error
 	switch orderReq.Side {
 	case model.OrderSideSell:
-		u.orderRepository.UpdateUserWallet(ctx, userDetail.ID, userWallet.CryptoID, -orderReq.Quantity)
+		errBalanceUpdate = u.orderRepository.UpdateUserWallet(ctx, userDetail.ID, userWallet.CryptoID, -orderReq.Quantity)
+
 	case model.OrderSideBuy:
 		totalAmount := orderReq.Price * orderReq.Quantity
-		u.orderRepository.UpdateUserWallet(ctx, userDetail.ID, userWallet.CryptoID, -totalAmount)
+		errBalanceUpdate = u.orderRepository.UpdateUserWallet(ctx, userDetail.ID, userWallet.CryptoID, -totalAmount)
 	}
+
+	if errBalanceUpdate != nil {
+		return model.Order{}, serverError.ErrGeneralDatabaseError(err)
+	}
+
+	// TODO:Release lock for this specific user
 
 	// Save to table orders
 	newOrder := model.Order{

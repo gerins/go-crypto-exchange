@@ -2,7 +2,6 @@ package user
 
 import (
 	"context"
-	"net/http"
 	"time"
 
 	"github.com/labstack/echo/v4"
@@ -36,12 +35,12 @@ func (h *httpHandler) LoginHandler(c echo.Context) error {
 
 	var requestPayload LoginRequest
 	if err := c.Bind(&requestPayload); err != nil {
-		return response.Failed(c, err, http.StatusBadRequest)
+		return response.Failed(c, err)
 	}
 
 	loginResult, err := h.userUsecase.Login(ctx, requestPayload)
 	if err != nil {
-		return response.Failed(c, err, http.StatusBadRequest)
+		return response.Failed(c, err)
 	}
 
 	return response.Success(c, loginResult)
@@ -53,12 +52,12 @@ func (h *httpHandler) RegisterHandler(c echo.Context) error {
 
 	var requestPayload RegisterRequest
 	if err := c.Bind(&requestPayload); err != nil {
-		return response.Failed(c, err, http.StatusBadRequest)
+		return response.Failed(c, err)
 	}
 
 	registerResult, err := h.userUsecase.Register(ctx, requestPayload)
 	if err != nil {
-		return response.Failed(c, err, http.StatusBadRequest)
+		return response.Failed(c, err)
 	}
 
 	return response.Success(c, registerResult)

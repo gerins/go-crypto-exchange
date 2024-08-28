@@ -5,14 +5,15 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
-	"github.com/spf13/cast"
+
+	serverError "core-engine/pkg/error"
 )
 
 type DefaultResponse struct {
-	Code   int `json:"code"`
-	Status any `json:"status"`
-	Data   any `json:"data"`
-	Meta   any `json:"meta,omitempty"`
+	Code    int `json:"code"`
+	Message any `json:"message"`
+	Data    any `json:"data"`
+	Meta    any `json:"meta,omitempty"`
 }
 
 type meta struct {
@@ -24,9 +25,9 @@ type meta struct {
 
 func Success(c echo.Context, data any) error {
 	response := DefaultResponse{
-		Code:   http.StatusOK,
-		Status: http.StatusText(http.StatusOK),
-		Data:   data,
+		Code:    http.StatusOK,
+		Message: http.StatusText(http.StatusOK),
+		Data:    data,
 	}
 
 	return c.JSON(http.StatusOK, response)
@@ -34,9 +35,9 @@ func Success(c echo.Context, data any) error {
 
 func SuccessList(c echo.Context, data any, page, limit, totalItem int) error {
 	response := DefaultResponse{
-		Code:   http.StatusOK,
-		Status: http.StatusText(http.StatusOK),
-		Data:   data,
+		Code:    http.StatusOK,
+		Message: http.StatusText(http.StatusOK),
+		Data:    data,
 		Meta: meta{
 			Page:      page,
 			Limit:     limit,
@@ -48,12 +49,23 @@ func SuccessList(c echo.Context, data any, page, limit, totalItem int) error {
 	return c.JSON(http.StatusOK, response)
 }
 
-func Failed(c echo.Context, err any, code int) error {
+func Failed(c echo.Context, err error) error {
+	var (
+		generalError = serverError.ErrGeneralError(err)
+		httpCode     = generalError.HTTPCode
+	)
+
 	response := DefaultResponse{
-		Code:   code,
-		Status: cast.ToString(err),
-		Data:   nil,
+		Code:    generalError.Code,
+		Message: generalError.Message,
+		Data:    nil,
 	}
 
-	return c.JSON(code, response)
+	if errWrapper, ok := err.(serverError.ServerError); ok {
+		httpCode = errWrapper.HTTPCode
+		response.Code = errWrapper.Code
+		response.Message = errWrapper.Message
+	}
+
+	return c.JSON(httpCode, response)
 }

@@ -54,7 +54,7 @@ func (u *usecase) Login(ctx context.Context, loginReq LoginRequest) (LoginRespon
 	tokenString, err := token.SignedString([]byte(u.securityConfig.Jwt.Key))
 	if err != nil {
 		log.Context(ctx).Errorf("failed generate token string, %v", err)
-		return LoginResponse{}, ErrInvalidPassword
+		return LoginResponse{}, serverError.ErrInvalidUsernameOrPassword(err)
 	}
 
 	loginResponse := LoginResponse{

@@ -2,7 +2,6 @@ package order
 
 import (
 	"context"
-	"net/http"
 	"time"
 
 	"github.com/labstack/echo/v4"
@@ -43,12 +42,12 @@ func (h *httpHandler) OrderHandler(c echo.Context) error {
 
 	var requestPayload model.OrderRequest
 	if err := c.Bind(&requestPayload); err != nil {
-		return response.Failed(c, err, http.StatusBadRequest)
+		return response.Failed(c, err)
 	}
 
 	orderResult, err := h.orderUsecase.ProcessOrder(ctx, requestPayload)
 	if err != nil {
-		return response.Failed(c, err, http.StatusBadRequest)
+		return response.Failed(c, err)
 	}
 
 	return response.Success(c, orderResult)
