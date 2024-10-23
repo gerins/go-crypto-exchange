@@ -24,7 +24,7 @@ func (r *repository) FindUserByEmail(ctx context.Context, email string) (User, e
 	defer log.Context(ctx).RecordDuration("find user by email").Stop()
 
 	var user User
-	if err := r.readDB.Where("email = ?", email).First(&user).Error; err != nil {
+	if err := r.readDB.WithContext(ctx).Where("email = ?", email).First(&user).Error; err != nil {
 		log.Context(ctx).Error(err)
 		return User{}, err
 	}
@@ -35,7 +35,7 @@ func (r *repository) FindUserByEmail(ctx context.Context, email string) (User, e
 func (r *repository) RegisterNewUser(ctx context.Context, user User) (User, error) {
 	defer log.Context(ctx).RecordDuration("register new user").Stop()
 
-	if err := r.writeDB.Save(&user).Error; err != nil {
+	if err := r.writeDB.WithContext(ctx).Save(&user).Error; err != nil {
 		log.Context(ctx).Error(err)
 		return User{}, err
 	}
