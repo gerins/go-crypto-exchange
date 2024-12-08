@@ -1,12 +1,12 @@
 package response
 
 import (
-	"context"
+	"errors"
 	"math"
 	"net/http"
 
-	"github.com/gerins/log"
 	"github.com/labstack/echo/v4"
+	"gorm.io/gorm"
 
 	serverError "core-engine/pkg/error"
 )
@@ -55,7 +55,6 @@ func Failed(c echo.Context, err error) error {
 	var (
 		generalError = serverError.ErrGeneralError(nil)
 		httpRespCode = generalError.HTTPCode
-		rawError     = err
 	)
 
 	response := DefaultResponse{
@@ -64,14 +63,17 @@ func Failed(c echo.Context, err error) error {
 		Data:    nil,
 	}
 
+	// Default response for data not found in database
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		err = serverError.ErrDataNotFound(err)
+	}
+
 	// Check for wrapped server error
 	if serverErr, ok := err.(serverError.ServerError); ok {
-		rawError = serverErr.RawError
 		httpRespCode = serverErr.HTTPCode
 		response.Code = serverErr.Code
 		response.Message = serverErr.Message
 	}
 
-	log.Context(c.Get("ctx").(context.Context)).ExtraData["error"] = rawError.Error()
 	return c.JSON(httpRespCode, response)
 }

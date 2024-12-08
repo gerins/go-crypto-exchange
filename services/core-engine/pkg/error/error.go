@@ -45,4 +45,7 @@ var (
 	ErrGeneralDatabaseError = func(err error) ServerError {
 		return ServerError{http.StatusInternalServerError, 800, "internal dependencies error", err}
 	}
+	ErrDataNotFound = func(err error) ServerError {
+		return ServerError{http.StatusBadRequest, 700, "data not found", err}
+	}
 )
