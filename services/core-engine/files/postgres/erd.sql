@@ -22,6 +22,7 @@ CREATE TABLE users (
     deleted_at                      TIMESTAMP WITH TIME ZONE 
 );
 
+CREATE UNIQUE INDEX IF NOT EXISTS user_email_idx ON users (email);
 CREATE TRIGGER users BEFORE UPDATE ON users FOR EACH ROW EXECUTE PROCEDURE update_modified_column();
 
 INSERT INTO users (
@@ -89,6 +90,7 @@ CREATE TABLE pairs (
     deleted_at                      TIMESTAMP WITH TIME ZONE 
 );
 
+CREATE UNIQUE INDEX IF NOT EXISTS pairs_code_idx ON pairs (code);
 CREATE TRIGGER pairs BEFORE UPDATE ON pairs FOR EACH ROW EXECUTE PROCEDURE update_modified_column();
 
 INSERT INTO pairs (
