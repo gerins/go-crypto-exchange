@@ -10,7 +10,7 @@ app:
     port: 8081
   logging:
     logToTerminal: true       # Set log output to stdout
-    logToFile: true           # Set log output to file
+    logToFile: false           # Set log output to file
     location: /log/           # Location log file will be save in project directory
     fileLogName: server       # File log name.
     maxAge: 30                # Days before deleting log file.
@@ -41,7 +41,7 @@ dependencies:
       debugLog: false         # Disable for optimal performance
       pool:
         maxIdleConn: 25
-        maxOpenConn: 50 
+        maxOpenConn: 40 
         maxConnLifeTime: 30m
         maxIdleLifeTime: 10s
     write:
@@ -53,6 +53,6 @@ dependencies:
       debugLog: false         # Disable for optimal performance
       pool:
         maxIdleConn: 25
-        maxOpenConn: 50 
+        maxOpenConn: 45
         maxConnLifeTime: 30m
         maxIdleLifeTime: 10s
