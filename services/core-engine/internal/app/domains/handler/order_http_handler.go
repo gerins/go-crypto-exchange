@@ -1,4 +1,4 @@
-package order
+package handler
 
 import (
 	"context"
@@ -7,28 +7,29 @@ import (
 	"github.com/labstack/echo/v4"
 
 	"core-engine/config"
-	"core-engine/internal/app/domains/order/model"
+	"core-engine/internal/app/domains/dto"
+	"core-engine/internal/app/domains/model"
 	httpMiddleware "core-engine/internal/app/middleware/http"
 	"core-engine/pkg/response"
 )
 
-type httpHandler struct {
+type orderHandler struct {
 	timeout        time.Duration
-	orderUsecase   model.Usecase
+	orderUsecase   model.OrderUsecase
 	securityConfig config.Security
 }
 
-func NewHTTPHandler(orderUsecase model.Usecase, timeout time.Duration, securityConfig config.Security) interface {
+func NewOrderHTTPHandler(orderUsecase model.OrderUsecase, timeout time.Duration, securityConfig config.Security) interface {
 	InitRoutes(e *echo.Echo)
 } {
-	return &httpHandler{
+	return &orderHandler{
 		timeout:        timeout,
 		orderUsecase:   orderUsecase,
 		securityConfig: securityConfig,
 	}
 }
 
-func (h *httpHandler) InitRoutes(e *echo.Echo) {
+func (h *orderHandler) InitRoutes(e *echo.Echo) {
 	v1 := e.Group("/api/v1/order")
 	v1.Use(httpMiddleware.ValidateJwtToken([]byte(h.securityConfig.Jwt.Key)))
 	{
@@ -36,11 +37,11 @@ func (h *httpHandler) InitRoutes(e *echo.Echo) {
 	}
 }
 
-func (h *httpHandler) OrderHandler(c echo.Context) error {
+func (h *orderHandler) OrderHandler(c echo.Context) error {
 	ctx, cancel := context.WithTimeout(c.Get("ctx").(context.Context), h.timeout)
 	defer cancel()
 
-	var requestPayload model.OrderRequest
+	var requestPayload dto.OrderRequest
 	if err := c.Bind(&requestPayload); err != nil {
 		return response.Failed(c, err)
 	}

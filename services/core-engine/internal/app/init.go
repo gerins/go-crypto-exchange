@@ -7,8 +7,9 @@ import (
 	"google.golang.org/grpc"
 
 	"core-engine/config"
-	"core-engine/internal/app/domains/order"
-	"core-engine/internal/app/domains/user"
+	"core-engine/internal/app/domains/handler"
+	"core-engine/internal/app/domains/repository"
+	"core-engine/internal/app/domains/usecase"
 	"core-engine/pkg/gorm"
 	"core-engine/pkg/kafka"
 	"core-engine/pkg/redis"
@@ -27,19 +28,18 @@ func Init(e *echo.Echo, g *grpc.Server, cfg *config.Config) chan bool {
 		producer, writer   = kafka.NewProducer(cfg.Dependencies.MessageBroker.Brokers)
 	)
 
-	// Init http router
-	{
-		// User Domain
-		userRepository := user.NewRepository(readDatabase, writeDatabase)
-		userUsecase := user.NewUsecase(cfg.Security, validator, userRepository)
-		user.NewHTTPHandler(userUsecase, apiTimeout).InitRoutes(e)
+	// Repository
+	userRepository := repository.NewUserRepository(readDatabase, writeDatabase)
+	orderRepository := repository.NewOrderRepository(readDatabase, writeDatabase)
 
-		// Order Domain
-		orderRepository := order.NewRepository(readDatabase, writeDatabase)
-		orderUsecase := order.NewUsecase(redisLock, writeDatabase, producer, validator, orderRepository, userRepository)
-		order.NewHTTPHandler(orderUsecase, apiTimeout, cfg.Security).InitRoutes(e)
-		order.NewQueueHandler(matchOrderConsumer, orderUsecase, apiTimeout).StartConsumer()
-	}
+	// Usecase
+	userUsecase := usecase.NewUserUsecase(cfg.Security, validator, userRepository)
+	orderUsecase := usecase.NewOrderUsecase(redisLock, writeDatabase, producer, validator, orderRepository, userRepository)
+
+	// Handler
+	handler.NewUserHandler(userUsecase, apiTimeout).InitRoutes(e)
+	handler.NewOrderHTTPHandler(orderUsecase, apiTimeout, cfg.Security).InitRoutes(e)
+	handler.NewOrderQueueHandler(matchOrderConsumer, orderUsecase, apiTimeout).StartConsumer()
 
 	// Graceful shutdown
 	go func() {

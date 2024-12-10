@@ -1,6 +1,10 @@
 package model
 
-import "time"
+import (
+	"time"
+
+	"core-engine/internal/app/domains/dto"
+)
 
 type Wallet struct {
 	ID        int        `json:"id" gorm:"column:id;type:int;primaryKey;autoIncrement"`
@@ -16,8 +20,8 @@ func (Wallet) TableName() string {
 	return "wallet"
 }
 
-func (userWallet Wallet) IsEnoughBalance(orderReq OrderRequest) bool {
-	switch orderReq.Side {
+func (userWallet Wallet) IsEnoughBalance(orderReq dto.OrderRequest) bool {
+	switch Side(orderReq.Side) {
 	case OrderSideSell:
 		return userWallet.Quantity >= orderReq.Quantity
 

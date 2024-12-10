@@ -1,4 +1,4 @@
-package user
+package dto
 
 type LoginRequest struct {
 	Email    string `json:"email"`

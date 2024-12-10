@@ -1,9 +1,11 @@
 //go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -generate
-package user
+package model
 
 import (
 	"context"
 	"time"
+
+	"core-engine/internal/app/domains/dto"
 )
 
 type User struct {
@@ -23,13 +25,13 @@ func (User) TableName() string {
 }
 
 //counterfeiter:generate -o ./mock . Usecase
-type Usecase interface {
-	Login(ctx context.Context, loginReq LoginRequest) (LoginResponse, error)
-	Register(ctx context.Context, registerReq RegisterRequest) (User, error)
+type UserUsecase interface {
+	Login(ctx context.Context, loginReq dto.LoginRequest) (dto.LoginResponse, error)
+	Register(ctx context.Context, registerReq dto.RegisterRequest) (User, error)
 }
 
 //counterfeiter:generate -o ./mock . Repository
-type Repository interface {
+type UserRepository interface {
 	FindUserByEmail(ctx context.Context, email string) (User, error)
 	RegisterNewUser(ctx context.Context, user User) (User, error)
 }

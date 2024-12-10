@@ -1,4 +1,4 @@
-package order
+package usecase
 
 import (
 	"context"
@@ -12,33 +12,33 @@ import (
 	"github.com/spf13/cast"
 	"gorm.io/gorm"
 
-	"core-engine/internal/app/domains/order/model"
-	"core-engine/internal/app/domains/user"
+	"core-engine/internal/app/domains/dto"
+	"core-engine/internal/app/domains/model"
 	serverError "core-engine/pkg/error"
 	gormpkg "core-engine/pkg/gorm"
 	"core-engine/pkg/jwt"
 	"core-engine/pkg/kafka"
 )
 
-type usecase struct {
+type orderUsecase struct {
 	redisLock       *redsync.Redsync
 	writeDB         *gorm.DB
 	kafkaProducer   kafka.Producer
 	validator       *validator.Validate
-	orderRepository model.Repository
-	userRepository  user.Repository
+	orderRepository model.OrderRepository
+	userRepository  model.UserRepository
 }
 
-// NewUsecase returns new order usecase.
-func NewUsecase(
+// NewOrderUsecase returns new order usecase.
+func NewOrderUsecase(
 	redisLock *redsync.Redsync,
 	writeDB *gorm.DB,
 	kafkaProducer kafka.Producer,
 	validator *validator.Validate,
-	orderRepository model.Repository,
-	userRepository user.Repository,
-) *usecase {
-	return &usecase{
+	orderRepository model.OrderRepository,
+	userRepository model.UserRepository,
+) *orderUsecase {
+	return &orderUsecase{
 		redisLock:       redisLock,
 		writeDB:         writeDB,
 		kafkaProducer:   kafkaProducer,
@@ -48,7 +48,7 @@ func NewUsecase(
 	}
 }
 
-func (u *usecase) ProcessOrder(ctx context.Context, orderReq model.OrderRequest) (model.Order, error) {
+func (u *orderUsecase) ProcessOrder(ctx context.Context, orderReq dto.OrderRequest) (model.Order, error) {
 	defer log.Context(ctx).RecordDuration("ProcessOrder").Stop()
 
 	tokenPayload := jwt.GetPayloadFromContext(ctx)
@@ -71,7 +71,7 @@ func (u *usecase) ProcessOrder(ctx context.Context, orderReq model.OrderRequest)
 	}
 
 	targetCryptoID := cryptoPairDetail.PrimaryCryptoID
-	if orderReq.Side == model.OrderSideBuy {
+	if model.Side(orderReq.Side) == model.OrderSideBuy {
 		// When buying, check if user have enough secondary balance for buying primary crypto
 		targetCryptoID = cryptoPairDetail.SecondaryCryptoID
 	}
@@ -107,7 +107,7 @@ func (u *usecase) ProcessOrder(ctx context.Context, orderReq model.OrderRequest)
 
 	// Deduct user wallet balance
 	var errBalanceUpdate error
-	switch orderReq.Side {
+	switch model.Side(orderReq.Side) {
 	case model.OrderSideSell:
 		errBalanceUpdate = u.orderRepository.UpdateUserWallet(ctx, userDetail.ID, userWallet.CryptoID, -orderReq.Quantity)
 
@@ -125,8 +125,8 @@ func (u *usecase) ProcessOrder(ctx context.Context, orderReq model.OrderRequest)
 		PairID:          cryptoPairDetail.ID,
 		Quantity:        orderReq.Quantity,
 		Price:           orderReq.Price,
-		Type:            orderReq.Type,
-		Side:            orderReq.Side,
+		Type:            model.Type(orderReq.Type),
+		Side:            model.Side(orderReq.Side),
 		Status:          model.OrderStatusProgress,
 		TransactionTime: time.Now().Unix(),
 	}
@@ -150,7 +150,7 @@ func (u *usecase) ProcessOrder(ctx context.Context, orderReq model.OrderRequest)
 	return order, nil
 }
 
-func (u *usecase) MatchOrder(ctx context.Context, tradeReq model.TradeRequest) error {
+func (u *orderUsecase) MatchOrder(ctx context.Context, tradeReq dto.TradeRequest) error {
 	defer log.Context(ctx).RecordDuration("MatchOrder").Stop()
 
 	// Check crypto pair detail
@@ -211,7 +211,7 @@ func (u *usecase) MatchOrder(ctx context.Context, tradeReq model.TradeRequest) e
 	ctx, tx := gormpkg.InitTransactionToContext(ctx, u.writeDB)
 	defer tx.WithContext(ctx).Rollback()
 
-	switch tradeReq.Side {
+	switch model.Side(tradeReq.Side) {
 	case model.OrderSideBuy:
 		// Update taker (buyer) primary pair wallet
 		if err = u.orderRepository.UpdateUserWallet(ctx, takerOrder.UserID, cryptoPairDetail.PrimaryCryptoID, tradeReq.Quantity); err != nil {

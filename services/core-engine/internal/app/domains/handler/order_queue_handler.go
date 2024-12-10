@@ -1,4 +1,4 @@
-package order
+package handler
 
 import (
 	"context"
@@ -8,16 +8,17 @@ import (
 	"github.com/gerins/log"
 	"github.com/segmentio/kafka-go"
 
-	"core-engine/internal/app/domains/order/model"
+	"core-engine/internal/app/domains/dto"
+	"core-engine/internal/app/domains/model"
 )
 
 type queueHandler struct {
 	kafkaConsumer *kafka.Reader
-	orderUsecase  model.Usecase
+	orderUsecase  model.OrderUsecase
 	timeout       time.Duration
 }
 
-func NewQueueHandler(kafkaConsumer *kafka.Reader, orderUsecase model.Usecase, timeout time.Duration) *queueHandler {
+func NewOrderQueueHandler(kafkaConsumer *kafka.Reader, orderUsecase model.OrderUsecase, timeout time.Duration) *queueHandler {
 	return &queueHandler{
 		kafkaConsumer: kafkaConsumer,
 		orderUsecase:  orderUsecase,
@@ -59,7 +60,7 @@ func (h *queueHandler) StartConsumer() {
 }
 
 func (h *queueHandler) MatchOrderHandler(ctx context.Context, msg []byte) error {
-	var payload model.TradeRequest
+	var payload dto.TradeRequest
 
 	if err := payload.FromJSON(msg); err != nil {
 		log.Context(ctx).Error(err)

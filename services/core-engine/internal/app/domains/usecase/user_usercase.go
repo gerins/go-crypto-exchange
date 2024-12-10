@@ -1,4 +1,4 @@
-package user
+package usecase
 
 import (
 	"context"
@@ -10,35 +10,37 @@ import (
 	"golang.org/x/crypto/bcrypt"
 
 	"core-engine/config"
+	"core-engine/internal/app/domains/dto"
+	"core-engine/internal/app/domains/model"
 	serverError "core-engine/pkg/error"
 )
 
-type usecase struct {
+type userUsecase struct {
 	securityConfig config.Security
-	userRepository Repository
+	userRepository model.UserRepository
 	validator      *validator.Validate
 }
 
-// NewUsecase returns new user usecase.
-func NewUsecase(securityConfig config.Security, validator *validator.Validate, userRepository Repository) *usecase {
-	return &usecase{
+// NewUserUsecase returns new user userUsecase.
+func NewUserUsecase(securityConfig config.Security, validator *validator.Validate, userRepository model.UserRepository) *userUsecase {
+	return &userUsecase{
 		securityConfig: securityConfig,
 		validator:      validator,
 		userRepository: userRepository,
 	}
 }
 
-func (u *usecase) Login(ctx context.Context, loginReq LoginRequest) (LoginResponse, error) {
+func (u *userUsecase) Login(ctx context.Context, loginReq dto.LoginRequest) (dto.LoginResponse, error) {
 	// Find user detail in repository
 	userDetail, err := u.userRepository.FindUserByEmail(ctx, loginReq.Email)
 	if err != nil {
-		return LoginResponse{}, err
+		return dto.LoginResponse{}, err
 	}
 
 	// Comparing the password with the hash
 	if err = bcrypt.CompareHashAndPassword([]byte(userDetail.Password), []byte(loginReq.Password)); err != nil {
 		log.Context(ctx).Error(err)
-		return LoginResponse{}, serverError.ErrInvalidUsernameOrPassword(err)
+		return dto.LoginResponse{}, serverError.ErrInvalidUsernameOrPassword(err)
 	}
 
 	// Create a new token object
@@ -54,10 +56,10 @@ func (u *usecase) Login(ctx context.Context, loginReq LoginRequest) (LoginRespon
 	tokenString, err := token.SignedString([]byte(u.securityConfig.Jwt.Key))
 	if err != nil {
 		log.Context(ctx).Errorf("failed generate token string, %v", err)
-		return LoginResponse{}, serverError.ErrInvalidUsernameOrPassword(err)
+		return dto.LoginResponse{}, serverError.ErrInvalidUsernameOrPassword(err)
 	}
 
-	loginResponse := LoginResponse{
+	loginResponse := dto.LoginResponse{
 		Email: userDetail.Email,
 		Token: tokenString,
 	}
@@ -65,16 +67,16 @@ func (u *usecase) Login(ctx context.Context, loginReq LoginRequest) (LoginRespon
 	return loginResponse, nil
 }
 
-func (u *usecase) Register(ctx context.Context, registerReq RegisterRequest) (User, error) {
+func (u *userUsecase) Register(ctx context.Context, registerReq dto.RegisterRequest) (model.User, error) {
 	// Hashing the password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(registerReq.Password), bcrypt.DefaultCost)
 	if err != nil {
 		log.Context(ctx).Error(err)
-		return User{}, err
+		return model.User{}, err
 	}
 
 	// Create new model for inserting to database
-	newUser := User{
+	newUser := model.User{
 		FullName:    registerReq.FullName,
 		Email:       registerReq.Email,
 		PhoneNumber: registerReq.PhoneNumber,
@@ -84,8 +86,14 @@ func (u *usecase) Register(ctx context.Context, registerReq RegisterRequest) (Us
 
 	newUser, err = u.userRepository.RegisterNewUser(ctx, newUser)
 	if err != nil {
-		return User{}, err
+		return model.User{}, err
 	}
 
+	// Inject initial balance for testing purpose
+
 	return newUser, nil
+}
+
+func (u *userUsecase) injectInitialBalance(ctx context.Context, userID int) error {
+	return nil
 }

@@ -1,4 +1,4 @@
-package user
+package handler
 
 import (
 	"context"
@@ -6,22 +6,24 @@ import (
 
 	"github.com/labstack/echo/v4"
 
+	"core-engine/internal/app/domains/dto"
+	"core-engine/internal/app/domains/model"
 	"core-engine/pkg/response"
 )
 
-type httpHandler struct {
+type userHandler struct {
 	timeout     time.Duration
-	userUsecase Usecase
+	userUsecase model.UserUsecase
 }
 
-func NewHTTPHandler(userUsecase Usecase, timeout time.Duration) interface{ InitRoutes(e *echo.Echo) } {
-	return &httpHandler{
+func NewUserHandler(userUsecase model.UserUsecase, timeout time.Duration) interface{ InitRoutes(e *echo.Echo) } {
+	return &userHandler{
 		timeout:     timeout,
 		userUsecase: userUsecase,
 	}
 }
 
-func (h *httpHandler) InitRoutes(e *echo.Echo) {
+func (h *userHandler) InitRoutes(e *echo.Echo) {
 	v1 := e.Group("/api/v1/user")
 	{
 		v1.POST("/login", h.LoginHandler)
@@ -29,11 +31,11 @@ func (h *httpHandler) InitRoutes(e *echo.Echo) {
 	}
 }
 
-func (h *httpHandler) LoginHandler(c echo.Context) error {
+func (h *userHandler) LoginHandler(c echo.Context) error {
 	ctx, cancel := context.WithTimeout(c.Get("ctx").(context.Context), h.timeout)
 	defer cancel()
 
-	var requestPayload LoginRequest
+	var requestPayload dto.LoginRequest
 	if err := c.Bind(&requestPayload); err != nil {
 		return response.Failed(c, err)
 	}
@@ -46,11 +48,11 @@ func (h *httpHandler) LoginHandler(c echo.Context) error {
 	return response.Success(c, loginResult)
 }
 
-func (h *httpHandler) RegisterHandler(c echo.Context) error {
+func (h *userHandler) RegisterHandler(c echo.Context) error {
 	ctx, cancel := context.WithTimeout(c.Get("ctx").(context.Context), h.timeout)
 	defer cancel()
 
-	var requestPayload RegisterRequest
+	var requestPayload dto.RegisterRequest
 	if err := c.Bind(&requestPayload); err != nil {
 		return response.Failed(c, err)
 	}
