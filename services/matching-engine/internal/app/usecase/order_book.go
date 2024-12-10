@@ -89,7 +89,9 @@ func (book *OrderBook) processLimitBuy(reqOrder model.Order) []model.Trade {
 				trades = append(trades, model.Trade{
 					PairID:       reqOrder.PairID,
 					PairCode:     book.pairCode,
+					TakerUserID:  reqOrder.UserID,
 					TakerOrderID: reqOrder.ID,
+					MakerUserID:  book.SellOrders[i].UserID,
 					MakerOrderID: book.SellOrders[i].ID,
 					Quantity:     reqOrder.Quantity,
 					Price:        book.SellOrders[i].Price,
@@ -110,7 +112,9 @@ func (book *OrderBook) processLimitBuy(reqOrder model.Order) []model.Trade {
 				trades = append(trades, model.Trade{
 					PairID:       reqOrder.PairID,
 					PairCode:     book.pairCode,
+					TakerUserID:  reqOrder.UserID,
 					TakerOrderID: reqOrder.ID,
+					MakerUserID:  book.SellOrders[i].UserID,
 					MakerOrderID: book.SellOrders[i].ID,
 					Quantity:     book.SellOrders[i].Quantity,
 					Price:        book.SellOrders[i].Price,
@@ -148,7 +152,9 @@ func (book *OrderBook) processLimitSell(reqOrder model.Order) []model.Trade {
 				trades = append(trades, model.Trade{
 					PairID:       reqOrder.PairID,
 					PairCode:     book.pairCode,
+					TakerUserID:  reqOrder.UserID,
 					TakerOrderID: reqOrder.ID,
+					MakerUserID:  book.BuyOrders[i].UserID,
 					MakerOrderID: book.BuyOrders[i].ID,
 					Quantity:     reqOrder.Quantity,
 					Price:        book.BuyOrders[i].Price,
@@ -169,7 +175,9 @@ func (book *OrderBook) processLimitSell(reqOrder model.Order) []model.Trade {
 				trades = append(trades, model.Trade{
 					PairID:       reqOrder.PairID,
 					PairCode:     book.pairCode,
+					TakerUserID:  reqOrder.UserID,
 					TakerOrderID: reqOrder.ID,
+					MakerUserID:  book.BuyOrders[i].UserID,
 					MakerOrderID: book.BuyOrders[i].ID,
 					Quantity:     book.BuyOrders[i].Quantity,
 					Price:        book.BuyOrders[i].Price,
