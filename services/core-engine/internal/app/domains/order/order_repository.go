@@ -32,7 +32,6 @@ func (r *repository) SaveOrder(ctx context.Context, order model.Order) (model.Or
 	}
 
 	if err := writeDB.WithContext(ctx).Save(&order).Error; err != nil {
-		log.Context(ctx).Error(err)
 		return model.Order{}, err
 	}
 
@@ -44,7 +43,6 @@ func (r *repository) GetOrder(ctx context.Context, id int) (model.Order, error) 
 
 	var order model.Order
 	if err := r.writeDB.WithContext(ctx).First(&order, id).Error; err != nil {
-		log.Context(ctx).Error(err)
 		return model.Order{}, err
 	}
 
@@ -60,7 +58,6 @@ func (r *repository) SaveMatchOrder(ctx context.Context, matchOrder model.MatchO
 	}
 
 	if err := writeDB.WithContext(ctx).Save(&matchOrder).Error; err != nil {
-		log.Context(ctx).Error(err)
 		return err
 	}
 
@@ -72,7 +69,6 @@ func (r *repository) GetPairDetail(ctx context.Context, code string) (model.Pair
 
 	var pair model.Pair
 	if err := r.readDB.WithContext(ctx).Where("code = ?", code).First(&pair).Error; err != nil {
-		log.Context(ctx).Error(err)
 		return model.Pair{}, err
 	}
 
@@ -84,7 +80,6 @@ func (r *repository) GetPairDetailByID(ctx context.Context, id int) (model.Pair,
 
 	var pair model.Pair
 	if err := r.readDB.WithContext(ctx).First(&pair, id).Error; err != nil {
-		log.Context(ctx).Error(err)
 		return model.Pair{}, err
 	}
 
@@ -96,7 +91,6 @@ func (r *repository) GetUserWallet(ctx context.Context, userID, cryptoID int) (m
 
 	var wallet model.Wallet
 	if err := r.readDB.WithContext(ctx).Where("user_id = ? AND crypto_id = ?", userID, cryptoID).First(&wallet).Error; err != nil {
-		log.Context(ctx).Error(err)
 		return model.Wallet{}, err
 	}
 
@@ -114,7 +108,6 @@ func (r *repository) UpdateUserWallet(ctx context.Context, userID, cryptoID int,
 
 	rawQuery := `UPDATE wallet SET quantity = quantity + ? WHERE user_id = ? AND crypto_id = ?`
 	if err := writeDB.WithContext(ctx).Exec(rawQuery, amount, userID, cryptoID).Error; err != nil {
-		log.Context(ctx).Error(err)
 		return err
 	}
 
