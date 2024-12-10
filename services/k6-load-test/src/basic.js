@@ -26,12 +26,20 @@ export const options = {
 // (Optional) Setup stage, preparing data before execute test
 // The setup function runs once, before any VUs start their execution.
 // The return value from the setup function is passed to the default function of each VU.
-export function setup() {
-    const userEmail = ['Price.Price85@hotmail.com', 'Katherine_Trantow@hotmail.com', 'Shaniya.Mayer33@hotmail.com', 'Jayda52@yahoo.com', 'Oliver_Heller81@gmail.com', 'Drew.Lueilwitz@gmail.com'];
 
+// Load the CSV file
+const emailList = open('../emails.csv'); // Ensure this 'open' function exists and works in your environment
+
+// Parse CSV content into an array of emails
+let userEmails = emailList
+    .split('\n') // Split the content by newlines
+    .map((line) => line.trim()) // Remove any extra spaces
+    .filter((line) => line); // Exclude empty lines
+
+export function setup() {
     let listToken = [];
 
-    userEmail.forEach((email) => {
+    userEmails.forEach((email) => {
         let params = {
             headers: {
                 'Content-Type': 'application/json',
