@@ -143,6 +143,28 @@ func (u *usecase) MatchOrder(ctx context.Context, tradeReq model.TradeRequest) e
 		return err
 	}
 
+	// Lock taker and maker order id
+	mutexMaker := u.redisLock.NewMutex(fmt.Sprintf("locking#maker#%v", tradeReq.MakerOrderID))
+	if err := mutexMaker.Lock(); err != nil {
+		log.Context(ctx).Error(err)
+		return err
+	}
+
+	mutexTaker := u.redisLock.NewMutex(fmt.Sprintf("locking#taker#%v", tradeReq.TakerOrderID))
+	if err := mutexTaker.Lock(); err != nil {
+		log.Context(ctx).Error(err)
+		return err
+	}
+
+	defer func() {
+		if ok, err := mutexMaker.Unlock(); !ok || err != nil {
+			log.Context(ctx).Error(err)
+		}
+		if ok, err := mutexTaker.Unlock(); !ok || err != nil {
+			log.Context(ctx).Error(err)
+		}
+	}()
+
 	// Get order detail from maker and taker
 	takerOrder, err := u.orderRepository.GetOrder(ctx, tradeReq.TakerOrderID)
 	if err != nil {

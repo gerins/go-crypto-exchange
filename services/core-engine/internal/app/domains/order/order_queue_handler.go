@@ -32,7 +32,7 @@ func (h *queueHandler) StartConsumer() {
 				continue
 			}
 
-			func() {
+			go func() {
 				ctx, cancel := context.WithTimeout(context.Background(), h.timeout)
 				defer func() { log.Context(ctx).Save(); cancel() }()
 
