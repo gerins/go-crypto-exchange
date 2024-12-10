@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/gerins/log"
-	"github.com/go-redis/redis/v8"
+	"github.com/redis/go-redis/v9"
 
 	"core-engine/config"
 )

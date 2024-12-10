@@ -2,9 +2,12 @@ package order
 
 import (
 	"context"
+	"fmt"
 	"time"
 
+	"github.com/gerins/log"
 	"github.com/go-playground/validator/v10"
+	"github.com/go-redsync/redsync/v4"
 	"github.com/spf13/cast"
 	"gorm.io/gorm"
 
@@ -17,6 +20,7 @@ import (
 )
 
 type usecase struct {
+	redisLock       *redsync.Redsync
 	writeDB         *gorm.DB
 	kafkaProducer   kafka.Producer
 	validator       *validator.Validate
@@ -26,6 +30,7 @@ type usecase struct {
 
 // NewUsecase returns new order usecase.
 func NewUsecase(
+	redisLock *redsync.Redsync,
 	writeDB *gorm.DB,
 	kafkaProducer kafka.Producer,
 	validator *validator.Validate,
@@ -33,6 +38,7 @@ func NewUsecase(
 	userRepository user.Repository,
 ) *usecase {
 	return &usecase{
+		redisLock:       redisLock,
 		writeDB:         writeDB,
 		kafkaProducer:   kafkaProducer,
 		validator:       validator,
@@ -67,7 +73,18 @@ func (u *usecase) ProcessOrder(ctx context.Context, orderReq model.OrderRequest)
 		targetCryptoID = cryptoPairDetail.SecondaryCryptoID
 	}
 
-	// TODO:Lock all balance activity for this specific user
+	// Lock all balance activity for this specific user
+	mutex := u.redisLock.NewMutex(fmt.Sprintf("locking#member#%v#%v", userDetail.ID, targetCryptoID))
+	if err := mutex.Lock(); err != nil {
+		log.Context(ctx).Error(err)
+		return model.Order{}, err
+	}
+
+	defer func() { // Release the lock so other processes or threads can obtain a lock.
+		if ok, err := mutex.Unlock(); !ok || err != nil {
+			log.Context(ctx).Error(err)
+		}
+	}()
 
 	userWallet, err := u.orderRepository.GetUserWallet(ctx, userDetail.ID, targetCryptoID)
 	if err != nil {
@@ -93,8 +110,6 @@ func (u *usecase) ProcessOrder(ctx context.Context, orderReq model.OrderRequest)
 	if errBalanceUpdate != nil {
 		return model.Order{}, serverError.ErrGeneralDatabaseError(err)
 	}
-
-	// TODO:Release lock for this specific user
 
 	// Save to table orders
 	newOrder := model.Order{

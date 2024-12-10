@@ -19,7 +19,8 @@ func Init(e *echo.Echo, g *grpc.Server, cfg *config.Config) chan bool {
 		exitSignal         = make(chan bool)
 		validator          = validator.New()
 		apiTimeout         = cfg.App.HTTP.CtxTimeout
-		redis              = redis.Init(cfg.Dependencies.Cache)
+		redisCache         = redis.Init(cfg.Dependencies.Cache)
+		redisLock          = redis.InitLock(redisCache)
 		readDatabase       = gorm.InitPostgres(cfg.Dependencies.Database.Read)
 		writeDatabase      = gorm.InitPostgres(cfg.Dependencies.Database.Write)
 		matchOrderConsumer = kafka.NewConsumer(cfg.Dependencies.MessageBroker, cfg.Dependencies.MessageBroker.Consumer.Topic.MatchOrder)
@@ -35,7 +36,7 @@ func Init(e *echo.Echo, g *grpc.Server, cfg *config.Config) chan bool {
 
 		// Order Domain
 		orderRepository := order.NewRepository(readDatabase, writeDatabase)
-		orderUsecase := order.NewUsecase(writeDatabase, producer, validator, orderRepository, userRepository)
+		orderUsecase := order.NewUsecase(redisLock, writeDatabase, producer, validator, orderRepository, userRepository)
 		order.NewHTTPHandler(orderUsecase, apiTimeout, cfg.Security).InitRoutes(e)
 		order.NewQueueHandler(matchOrderConsumer, orderUsecase, apiTimeout).StartConsumer()
 	}
@@ -53,7 +54,7 @@ func Init(e *echo.Echo, g *grpc.Server, cfg *config.Config) chan bool {
 			log.Error(err)
 		}
 
-		if err := redis.Close(); err != nil {
+		if err := redisCache.Close(); err != nil {
 			log.Error(err)
 		}
 
