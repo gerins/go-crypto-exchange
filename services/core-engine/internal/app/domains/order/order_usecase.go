@@ -49,6 +49,8 @@ func NewUsecase(
 }
 
 func (u *usecase) ProcessOrder(ctx context.Context, orderReq model.OrderRequest) (model.Order, error) {
+	defer log.Context(ctx).RecordDuration("ProcessOrder").Stop()
+
 	tokenPayload := jwt.GetPayloadFromContext(ctx)
 
 	// Check user detail
@@ -146,6 +148,8 @@ func (u *usecase) ProcessOrder(ctx context.Context, orderReq model.OrderRequest)
 }
 
 func (u *usecase) MatchOrder(ctx context.Context, tradeReq model.TradeRequest) error {
+	defer log.Context(ctx).RecordDuration("MatchOrder").Stop()
+
 	// Check crypto pair detail
 	cryptoPairDetail, err := u.orderRepository.GetPairDetailByID(ctx, tradeReq.PairID)
 	if err != nil {
