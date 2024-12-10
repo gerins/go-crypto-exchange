@@ -53,7 +53,7 @@ func SuccessList(c echo.Context, data any, page, limit, totalItem int) error {
 
 func Failed(c echo.Context, err error) error {
 	var (
-		generalError = serverError.ErrGeneralError(nil)
+		generalError = serverError.ErrGeneralError(err)
 		httpRespCode = generalError.HTTPCode
 	)
 

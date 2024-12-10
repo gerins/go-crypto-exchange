@@ -48,4 +48,7 @@ var (
 	ErrDataNotFound = func(err error) ServerError {
 		return ServerError{http.StatusBadRequest, 700, "data not found", err}
 	}
+	ErrInsufficientBalance = func(err error) ServerError {
+		return ServerError{http.StatusBadRequest, 705, "insufficient balance", err}
+	}
 )

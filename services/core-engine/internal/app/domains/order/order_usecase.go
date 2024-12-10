@@ -93,7 +93,7 @@ func (u *usecase) ProcessOrder(ctx context.Context, orderReq model.OrderRequest)
 
 	// Validate user balance
 	if !userWallet.IsEnoughBalance(orderReq) {
-		return model.Order{}, model.ErrInsufficientBalance
+		return model.Order{}, serverError.ErrInsufficientBalance(nil)
 	}
 
 	// Deduct user wallet balance
