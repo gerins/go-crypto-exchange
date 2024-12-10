@@ -2,6 +2,7 @@ package order
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/gerins/log"
@@ -33,12 +34,17 @@ func (h *queueHandler) StartConsumer() {
 			}
 
 			go func() {
+				logging := log.NewRequest()
+				logging.Method = kafkaMessage.Topic
+				logging.IP = string(kafkaMessage.Key)
+				logging.URL = fmt.Sprintf("partition %v offset %v", kafkaMessage.Partition, kafkaMessage.Offset)
+
+				// Parent context
 				ctx, cancel := context.WithTimeout(context.Background(), h.timeout)
-				defer func() { log.Context(ctx).Save(); cancel() }()
+				defer func() { logging.Save(); cancel() }()
 
-				ctx = log.NewRequest().SaveToContext(ctx)
-
-				if err := h.MatchOrderHandler(ctx, kafkaMessage.Value); err != nil {
+				// Proceed match order
+				if err := h.MatchOrderHandler(logging.SaveToContext(ctx), kafkaMessage.Value); err != nil {
 					return // Dont commit message if error occur
 				}
 
