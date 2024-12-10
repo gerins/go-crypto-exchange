@@ -151,14 +151,14 @@ func (u *usecase) MatchOrder(ctx context.Context, tradeReq model.TradeRequest) e
 		return err
 	}
 
-	// Lock taker and maker order id
-	mutexMaker := u.redisLock.NewMutex(fmt.Sprintf("locking#maker#%v", tradeReq.MakerOrderID))
+	// Lock taker and maker user id
+	mutexMaker := u.redisLock.NewMutex(fmt.Sprintf("locking#trade#maker#%v", tradeReq.MakerUserID))
 	if err := mutexMaker.Lock(); err != nil {
 		log.Context(ctx).Error(err)
 		return err
 	}
 
-	mutexTaker := u.redisLock.NewMutex(fmt.Sprintf("locking#taker#%v", tradeReq.TakerOrderID))
+	mutexTaker := u.redisLock.NewMutex(fmt.Sprintf("locking#trade#taker#%v", tradeReq.TakerUserID))
 	if err := mutexTaker.Lock(); err != nil {
 		log.Context(ctx).Error(err)
 		return err

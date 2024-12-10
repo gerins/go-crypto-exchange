@@ -39,8 +39,7 @@ func (h *queueHandler) StartConsumer() {
 				ctx = log.NewRequest().SaveToContext(ctx)
 
 				if err := h.MatchOrderHandler(ctx, kafkaMessage.Value); err != nil {
-					log.Context(ctx).Error(err)
-					return
+					return // Dont commit message if error occur
 				}
 
 				// Commit message
