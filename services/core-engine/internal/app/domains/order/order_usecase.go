@@ -96,6 +96,9 @@ func (u *usecase) ProcessOrder(ctx context.Context, orderReq model.OrderRequest)
 		return model.Order{}, serverError.ErrInsufficientBalance(nil)
 	}
 
+	ctx, tx := gormpkg.InitTransactionToContext(ctx, u.writeDB)
+	defer tx.WithContext(ctx).Rollback()
+
 	// Deduct user wallet balance
 	var errBalanceUpdate error
 	switch orderReq.Side {
@@ -111,7 +114,6 @@ func (u *usecase) ProcessOrder(ctx context.Context, orderReq model.OrderRequest)
 		return model.Order{}, serverError.ErrGeneralDatabaseError(err)
 	}
 
-	// Save to table orders
 	newOrder := model.Order{
 		UserID:          userDetail.ID,
 		PairID:          cryptoPairDetail.ID,
@@ -123,6 +125,7 @@ func (u *usecase) ProcessOrder(ctx context.Context, orderReq model.OrderRequest)
 		TransactionTime: time.Now().Unix(),
 	}
 
+	// Save to table orders
 	order, err := u.orderRepository.SaveOrder(ctx, newOrder)
 	if err != nil {
 		return model.Order{}, err
@@ -131,6 +134,11 @@ func (u *usecase) ProcessOrder(ctx context.Context, orderReq model.OrderRequest)
 	// Publish to matching engine
 	if err := u.kafkaProducer.Send(ctx, cryptoPairDetail.Code, cast.ToString(order.ID), order); err != nil {
 		return model.Order{}, err
+	}
+
+	if err := tx.WithContext(ctx).Commit().Error; err != nil {
+		log.Context(ctx).Error(err)
+		return model.Order{}, serverError.ErrGeneralDatabaseError(err)
 	}
 
 	return order, nil
@@ -191,12 +199,8 @@ func (u *usecase) MatchOrder(ctx context.Context, tradeReq model.TradeRequest) e
 		makerOrder.Status = model.OrderStatusComplete
 	}
 
-	ctx, tx, err := gormpkg.InitTransactionToContext(ctx, u.writeDB)
-	if err != nil {
-		return err
-	}
-
-	defer tx.Rollback()
+	ctx, tx := gormpkg.InitTransactionToContext(ctx, u.writeDB)
+	defer tx.WithContext(ctx).Rollback()
 
 	switch tradeReq.Side {
 	case model.OrderSideBuy:
@@ -245,5 +249,5 @@ func (u *usecase) MatchOrder(ctx context.Context, tradeReq model.TradeRequest) e
 		return err
 	}
 
-	return tx.Commit().Error
+	return tx.WithContext(ctx).Commit().Error
 }
