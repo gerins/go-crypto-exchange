@@ -59,7 +59,7 @@ func (h *queueHandler) StartConsumer() {
 }
 
 func (h *queueHandler) MatchOrderHandler(ctx context.Context, msg []byte) error {
-	var payload model.BulkTradeRequest
+	var payload model.TradeRequest
 
 	if err := payload.FromJSON(msg); err != nil {
 		log.Context(ctx).Error(err)
@@ -67,11 +67,8 @@ func (h *queueHandler) MatchOrderHandler(ctx context.Context, msg []byte) error 
 	}
 
 	log.Context(ctx).ReqBody = payload
-
-	for i := 0; i < len(payload); i++ {
-		if err := h.orderUsecase.MatchOrder(ctx, payload[i]); err != nil {
-			return err
-		}
+	if err := h.orderUsecase.MatchOrder(ctx, payload); err != nil {
+		return err
 	}
 
 	return nil

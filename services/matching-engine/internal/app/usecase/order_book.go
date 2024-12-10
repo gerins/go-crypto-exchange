@@ -63,8 +63,10 @@ func (book *OrderBook) Execute(ctx context.Context, order model.Order) error {
 	log.Context(ctx).RespBody = trades
 
 	// Publish to Kafka
-	if err := book.kafkaProducer.Send(ctx, book.matchOrderTopic, cast.ToString(order.ID), trades); err != nil {
-		return err
+	for _, trade := range trades {
+		if err := book.kafkaProducer.Send(ctx, book.matchOrderTopic, cast.ToString(order.ID), trade); err != nil {
+			return err // TODO Run reversal mechanism
+		}
 	}
 
 	return nil

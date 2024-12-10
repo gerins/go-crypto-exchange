@@ -22,6 +22,10 @@ type TradeRequest struct {
 	TradeTime    int64   `json:"trade_time"`
 }
 
+func (trade *TradeRequest) FromJSON(msg []byte) error {
+	return json.Unmarshal(msg, trade)
+}
+
 type BulkTradeRequest []TradeRequest
 
 func (trade *BulkTradeRequest) FromJSON(msg []byte) error {
