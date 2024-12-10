@@ -16,17 +16,24 @@ import (
 )
 
 type userUsecase struct {
-	securityConfig config.Security
-	userRepository model.UserRepository
-	validator      *validator.Validate
+	validator        *validator.Validate
+	securityConfig   config.Security
+	userRepository   model.UserRepository
+	walletRepository model.WalletRepository
 }
 
 // NewUserUsecase returns new user userUsecase.
-func NewUserUsecase(securityConfig config.Security, validator *validator.Validate, userRepository model.UserRepository) *userUsecase {
+func NewUserUsecase(
+	validator *validator.Validate,
+	securityConfig config.Security,
+	userRepository model.UserRepository,
+	walletRepository model.WalletRepository,
+) *userUsecase {
 	return &userUsecase{
-		securityConfig: securityConfig,
-		validator:      validator,
-		userRepository: userRepository,
+		validator:        validator,
+		securityConfig:   securityConfig,
+		userRepository:   userRepository,
+		walletRepository: walletRepository,
 	}
 }
 
@@ -90,10 +97,37 @@ func (u *userUsecase) Register(ctx context.Context, registerReq dto.RegisterRequ
 	}
 
 	// Inject initial balance for testing purpose
+	if err := u.injectInitialBalance(ctx, newUser.ID); err != nil {
+		return model.User{}, err
+	}
 
 	return newUser, nil
 }
 
 func (u *userUsecase) injectInitialBalance(ctx context.Context, userID int) error {
+	pair, err := u.walletRepository.GetPairDetail(ctx, "DOGEIDRT")
+	if err != nil {
+		return err
+	}
+
+	primaryWallet := model.Wallet{
+		UserID:   userID,
+		CryptoID: pair.PrimaryCryptoID,
+		Quantity: 1000000000,
+	}
+
+	secondaryWallet := model.Wallet{
+		UserID:   userID,
+		CryptoID: pair.SecondaryCryptoID,
+		Quantity: 1000000000,
+	}
+
+	if err := u.walletRepository.Save(ctx, primaryWallet); err != nil {
+		return err
+	}
+	if err := u.walletRepository.Save(ctx, secondaryWallet); err != nil {
+		return err
+	}
+
 	return nil
 }

@@ -21,30 +21,33 @@ import (
 )
 
 type orderUsecase struct {
-	redisLock       *redsync.Redsync
-	writeDB         *gorm.DB
-	kafkaProducer   kafka.Producer
-	validator       *validator.Validate
-	orderRepository model.OrderRepository
-	userRepository  model.UserRepository
+	redisLock        *redsync.Redsync
+	writeDB          *gorm.DB
+	kafkaProducer    kafka.Producer
+	validator        *validator.Validate
+	orderRepository  model.OrderRepository
+	userRepository   model.UserRepository
+	walletRepository model.WalletRepository
 }
 
 // NewOrderUsecase returns new order usecase.
 func NewOrderUsecase(
-	redisLock *redsync.Redsync,
 	writeDB *gorm.DB,
+	redisLock *redsync.Redsync,
 	kafkaProducer kafka.Producer,
 	validator *validator.Validate,
 	orderRepository model.OrderRepository,
 	userRepository model.UserRepository,
+	walletRepository model.WalletRepository,
 ) *orderUsecase {
 	return &orderUsecase{
-		redisLock:       redisLock,
-		writeDB:         writeDB,
-		kafkaProducer:   kafkaProducer,
-		validator:       validator,
-		orderRepository: orderRepository,
-		userRepository:  userRepository,
+		writeDB:          writeDB,
+		redisLock:        redisLock,
+		kafkaProducer:    kafkaProducer,
+		validator:        validator,
+		orderRepository:  orderRepository,
+		userRepository:   userRepository,
+		walletRepository: walletRepository,
 	}
 }
 
@@ -65,7 +68,7 @@ func (u *orderUsecase) ProcessOrder(ctx context.Context, orderReq dto.OrderReque
 	}
 
 	// Check crypto pair detail
-	cryptoPairDetail, err := u.orderRepository.GetPairDetail(ctx, orderReq.PairCode)
+	cryptoPairDetail, err := u.walletRepository.GetPairDetail(ctx, orderReq.PairCode)
 	if err != nil {
 		return model.Order{}, serverError.ErrGeneralDatabaseError(err)
 	}
@@ -92,7 +95,7 @@ func (u *orderUsecase) ProcessOrder(ctx context.Context, orderReq dto.OrderReque
 		}
 	}()
 
-	userWallet, err := u.orderRepository.GetUserWallet(ctx, userDetail.ID, targetCryptoID)
+	userWallet, err := u.walletRepository.GetUserWallet(ctx, userDetail.ID, targetCryptoID)
 	if err != nil {
 		return model.Order{}, serverError.ErrGeneralDatabaseError(err)
 	}
@@ -109,11 +112,11 @@ func (u *orderUsecase) ProcessOrder(ctx context.Context, orderReq dto.OrderReque
 	var errBalanceUpdate error
 	switch model.Side(orderReq.Side) {
 	case model.OrderSideSell:
-		errBalanceUpdate = u.orderRepository.UpdateUserWallet(ctx, userDetail.ID, userWallet.CryptoID, -orderReq.Quantity)
+		errBalanceUpdate = u.walletRepository.UpdateUserWallet(ctx, userDetail.ID, userWallet.CryptoID, -orderReq.Quantity)
 
 	case model.OrderSideBuy:
 		totalAmount := orderReq.Price * orderReq.Quantity
-		errBalanceUpdate = u.orderRepository.UpdateUserWallet(ctx, userDetail.ID, userWallet.CryptoID, -totalAmount)
+		errBalanceUpdate = u.walletRepository.UpdateUserWallet(ctx, userDetail.ID, userWallet.CryptoID, -totalAmount)
 	}
 
 	if errBalanceUpdate != nil {
@@ -154,7 +157,7 @@ func (u *orderUsecase) MatchOrder(ctx context.Context, tradeReq dto.TradeRequest
 	defer log.Context(ctx).RecordDuration("MatchOrder").Stop()
 
 	// Check crypto pair detail
-	cryptoPairDetail, err := u.orderRepository.GetPairDetailByID(ctx, tradeReq.PairID)
+	cryptoPairDetail, err := u.walletRepository.GetPairDetailByID(ctx, tradeReq.PairID)
 	if err != nil {
 		return err
 	}
@@ -214,23 +217,23 @@ func (u *orderUsecase) MatchOrder(ctx context.Context, tradeReq dto.TradeRequest
 	switch model.Side(tradeReq.Side) {
 	case model.OrderSideBuy:
 		// Update taker (buyer) primary pair wallet
-		if err = u.orderRepository.UpdateUserWallet(ctx, takerOrder.UserID, cryptoPairDetail.PrimaryCryptoID, tradeReq.Quantity); err != nil {
+		if err = u.walletRepository.UpdateUserWallet(ctx, takerOrder.UserID, cryptoPairDetail.PrimaryCryptoID, tradeReq.Quantity); err != nil {
 			return err
 		}
 
 		// Update maker (seller) secondary pair wallet
-		if err = u.orderRepository.UpdateUserWallet(ctx, makerOrder.UserID, cryptoPairDetail.SecondaryCryptoID, tradeReq.Quantity); err != nil {
+		if err = u.walletRepository.UpdateUserWallet(ctx, makerOrder.UserID, cryptoPairDetail.SecondaryCryptoID, tradeReq.Quantity); err != nil {
 			return err
 		}
 
 	case model.OrderSideSell:
 		// Update taker (seller) secondary pair wallet
-		if err = u.orderRepository.UpdateUserWallet(ctx, takerOrder.UserID, cryptoPairDetail.SecondaryCryptoID, tradeReq.Quantity); err != nil {
+		if err = u.walletRepository.UpdateUserWallet(ctx, takerOrder.UserID, cryptoPairDetail.SecondaryCryptoID, tradeReq.Quantity); err != nil {
 			return err
 		}
 
 		// Update maker (buyer) primary pair wallet
-		if err = u.orderRepository.UpdateUserWallet(ctx, makerOrder.UserID, cryptoPairDetail.PrimaryCryptoID, tradeReq.Quantity); err != nil {
+		if err = u.walletRepository.UpdateUserWallet(ctx, makerOrder.UserID, cryptoPairDetail.PrimaryCryptoID, tradeReq.Quantity); err != nil {
 			return err
 		}
 	}

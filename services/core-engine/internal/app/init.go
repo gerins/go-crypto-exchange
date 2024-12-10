@@ -31,10 +31,11 @@ func Init(e *echo.Echo, g *grpc.Server, cfg *config.Config) chan bool {
 	// Repository
 	userRepository := repository.NewUserRepository(readDatabase, writeDatabase)
 	orderRepository := repository.NewOrderRepository(readDatabase, writeDatabase)
+	walletRepository := repository.NewWalletRepository(readDatabase, writeDatabase)
 
 	// Usecase
-	userUsecase := usecase.NewUserUsecase(cfg.Security, validator, userRepository)
-	orderUsecase := usecase.NewOrderUsecase(redisLock, writeDatabase, producer, validator, orderRepository, userRepository)
+	userUsecase := usecase.NewUserUsecase(validator, cfg.Security, userRepository, walletRepository)
+	orderUsecase := usecase.NewOrderUsecase(writeDatabase, redisLock, producer, validator, orderRepository, userRepository, walletRepository)
 
 	// Handler
 	handler.NewUserHandler(userUsecase, apiTimeout).InitRoutes(e)

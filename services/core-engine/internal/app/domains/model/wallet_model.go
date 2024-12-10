@@ -1,6 +1,7 @@
 package model
 
 import (
+	"context"
 	"time"
 
 	"core-engine/internal/app/domains/dto"
@@ -31,4 +32,15 @@ func (userWallet Wallet) IsEnoughBalance(orderReq dto.OrderRequest) bool {
 	}
 
 	return false
+}
+
+type WalletRepository interface {
+	// Crypto Pair
+	GetPairDetail(ctx context.Context, code string) (Pair, error)
+	GetPairDetailByID(ctx context.Context, id int) (Pair, error)
+
+	// Wallet
+	Save(ctx context.Context, wallet Wallet) error
+	GetUserWallet(ctx context.Context, userID, cryptoID int) (Wallet, error)
+	UpdateUserWallet(ctx context.Context, userID, cryptoID int, amount float64) error
 }
