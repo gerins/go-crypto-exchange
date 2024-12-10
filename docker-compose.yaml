@@ -51,7 +51,7 @@ services:
   core-engine:
     build: ./services/core-engine
     ports:
-      - 8080:8080
+      - 8070:8070
     networks:
       - docker-networks
     environment:

@@ -50,7 +50,7 @@ export function setup() {
             password: 'admin',
         });
 
-        let res = http.post('http://localhost:8080/api/v1/user/login', payload, params);
+        let res = http.post('http://localhost:8070/api/v1/user/login', payload, params);
 
         // Parse the response body as JSON
         let responseBody = res.json();
@@ -69,7 +69,7 @@ export function setup() {
 // Execution stage
 export default function (listToken) {
     // Define the URL to request
-    let url = 'http://localhost:8080/api/v1/order';
+    let url = 'http://localhost:8070/api/v1/order';
 
     // Define the parameters, including headers if needed
     let params = {
