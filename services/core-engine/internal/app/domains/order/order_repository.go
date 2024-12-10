@@ -3,7 +3,6 @@ package order
 import (
 	"context"
 
-	"github.com/gerins/log"
 	"gorm.io/gorm"
 
 	"core-engine/internal/app/domains/order/model"
@@ -24,8 +23,6 @@ func NewRepository(readDB *gorm.DB, writeDB *gorm.DB) *repository {
 }
 
 func (r *repository) SaveOrder(ctx context.Context, order model.Order) (model.Order, error) {
-	defer log.Context(ctx).RecordDuration("save order detail to database").Stop()
-
 	writeDB := r.writeDB
 	if tx := gormpkg.GetTransactionFromContext(ctx); tx != nil {
 		writeDB = tx
@@ -39,8 +36,6 @@ func (r *repository) SaveOrder(ctx context.Context, order model.Order) (model.Or
 }
 
 func (r *repository) GetOrder(ctx context.Context, id int) (model.Order, error) {
-	defer log.Context(ctx).RecordDuration("Get order detail").Stop()
-
 	var order model.Order
 	if err := r.writeDB.WithContext(ctx).First(&order, id).Error; err != nil {
 		return model.Order{}, err
@@ -50,8 +45,6 @@ func (r *repository) GetOrder(ctx context.Context, id int) (model.Order, error) 
 }
 
 func (r *repository) SaveMatchOrder(ctx context.Context, matchOrder model.MatchOrder) error {
-	defer log.Context(ctx).RecordDuration("save match order to database").Stop()
-
 	writeDB := r.writeDB
 	if tx := gormpkg.GetTransactionFromContext(ctx); tx != nil {
 		writeDB = tx
@@ -65,8 +58,6 @@ func (r *repository) SaveMatchOrder(ctx context.Context, matchOrder model.MatchO
 }
 
 func (r *repository) GetPairDetail(ctx context.Context, code string) (model.Pair, error) {
-	defer log.Context(ctx).RecordDuration("get pair detail").Stop()
-
 	var pair model.Pair
 	if err := r.readDB.WithContext(ctx).Where("code = ?", code).First(&pair).Error; err != nil {
 		return model.Pair{}, err
@@ -76,8 +67,6 @@ func (r *repository) GetPairDetail(ctx context.Context, code string) (model.Pair
 }
 
 func (r *repository) GetPairDetailByID(ctx context.Context, id int) (model.Pair, error) {
-	defer log.Context(ctx).RecordDuration("get pair detail").Stop()
-
 	var pair model.Pair
 	if err := r.readDB.WithContext(ctx).First(&pair, id).Error; err != nil {
 		return model.Pair{}, err
@@ -87,8 +76,6 @@ func (r *repository) GetPairDetailByID(ctx context.Context, id int) (model.Pair,
 }
 
 func (r *repository) GetUserWallet(ctx context.Context, userID, cryptoID int) (model.Wallet, error) {
-	defer log.Context(ctx).RecordDuration("get user wallet").Stop()
-
 	var wallet model.Wallet
 	if err := r.readDB.WithContext(ctx).Where("user_id = ? AND crypto_id = ?", userID, cryptoID).First(&wallet).Error; err != nil {
 		return model.Wallet{}, err
@@ -99,8 +86,6 @@ func (r *repository) GetUserWallet(ctx context.Context, userID, cryptoID int) (m
 
 // Increase user wallet
 func (r *repository) UpdateUserWallet(ctx context.Context, userID, cryptoID int, amount float64) error {
-	defer log.Context(ctx).RecordDuration("update user wallet").Stop()
-
 	writeDB := r.writeDB
 	if tx := gormpkg.GetTransactionFromContext(ctx); tx != nil {
 		writeDB = tx

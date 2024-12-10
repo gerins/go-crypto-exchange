@@ -77,11 +77,14 @@ func (u *usecase) ProcessOrder(ctx context.Context, orderReq model.OrderRequest)
 	}
 
 	// Lock all balance activity for this specific user
+	timeRecord := log.Context(ctx).RecordDuration("obtaining lock")
 	mutex := u.redisLock.NewMutex(fmt.Sprintf("locking#member#%v#%v", userDetail.ID, targetCryptoID))
 	if err := mutex.Lock(); err != nil {
 		log.Context(ctx).Error(err)
 		return model.Order{}, err
 	}
+
+	timeRecord.Stop()
 
 	defer func() { // Release the lock so other processes or threads can obtain a lock.
 		if ok, err := mutex.Unlock(); !ok || err != nil {
@@ -164,11 +167,14 @@ func (u *usecase) MatchOrder(ctx context.Context, tradeReq model.TradeRequest) e
 	// the same resources but in a different order.
 	sort.Ints(lockCombination)
 
+	timeRecord := log.Context(ctx).RecordDuration("obtaining lock")
 	lock := u.redisLock.NewMutex(fmt.Sprintf("locking#trade#%v", lockCombination))
 	if err := lock.Lock(); err != nil {
 		log.Context(ctx).Error(err)
 		return err
 	}
+
+	timeRecord.Stop()
 
 	defer func() {
 		if ok, err := lock.Unlock(); !ok || err != nil {
