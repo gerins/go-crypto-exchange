@@ -4,7 +4,7 @@ import { check, fail, sleep } from 'k6';
 // Init stage
 export const options = {
     // A number specifying the number of VUs to run concurrently.
-    vus: 2000,
+    vus: 1000,
 
     // A string specifying the total duration of the test run.
     // Cannot run simultaneously with stages
@@ -75,15 +75,15 @@ export default function (listToken) {
     let params = {
         headers: {
             'Content-Type': 'application/json',
-            Authorization: 'Bearer ' + listToken[getRandomInt(0, 5)],
+            Authorization: 'Bearer ' + listToken[getRandomInt(0, 300)],
         },
     };
 
     // Define the payload for a POST request
     let payload = JSON.stringify({
         pair_code: 'DOGEIDRT',
-        quantity: getRandomInt(1, 100),
-        price: getRandomInt(100, 1000),
+        quantity: getRandomInt(1, 25),
+        price: getRandomInt(50, 200),
         side: getRandomSide(),
         type: 'LIMIT',
     });
