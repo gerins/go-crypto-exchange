@@ -3,6 +3,7 @@ package order
 import (
 	"context"
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/gerins/log"
@@ -151,24 +152,18 @@ func (u *usecase) MatchOrder(ctx context.Context, tradeReq model.TradeRequest) e
 		return err
 	}
 
-	// Lock taker and maker user id
-	mutexMaker := u.redisLock.NewMutex(fmt.Sprintf("locking#trade#maker#%v", tradeReq.MakerUserID))
-	if err := mutexMaker.Lock(); err != nil {
-		log.Context(ctx).Error(err)
-		return err
-	}
+	// Compose locking key
+	lockCombination := []int{tradeReq.MakerUserID, tradeReq.TakerUserID}
+	sort.Ints(lockCombination)
 
-	mutexTaker := u.redisLock.NewMutex(fmt.Sprintf("locking#trade#taker#%v", tradeReq.TakerUserID))
-	if err := mutexTaker.Lock(); err != nil {
+	lock := u.redisLock.NewMutex(fmt.Sprintf("locking#trade#%v", lockCombination))
+	if err := lock.Lock(); err != nil {
 		log.Context(ctx).Error(err)
 		return err
 	}
 
 	defer func() {
-		if ok, err := mutexMaker.Unlock(); !ok || err != nil {
-			log.Context(ctx).Error(err)
-		}
-		if ok, err := mutexTaker.Unlock(); !ok || err != nil {
+		if ok, err := lock.Unlock(); !ok || err != nil {
 			log.Context(ctx).Error(err)
 		}
 	}()
