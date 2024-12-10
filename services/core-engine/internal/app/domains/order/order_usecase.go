@@ -154,6 +154,10 @@ func (u *usecase) MatchOrder(ctx context.Context, tradeReq model.TradeRequest) e
 
 	// Compose locking key
 	lockCombination := []int{tradeReq.MakerUserID, tradeReq.TakerUserID}
+
+	// Deterministic order
+	// This approach prevents deadlocks, which typically occur when transactions acquire locks on
+	// the same resources but in a different order.
 	sort.Ints(lockCombination)
 
 	lock := u.redisLock.NewMutex(fmt.Sprintf("locking#trade#%v", lockCombination))
